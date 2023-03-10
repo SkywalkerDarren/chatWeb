@@ -36,7 +36,7 @@ def run():
     limit = 30
     while True:
 
-        query = input("请输入查询：")
+        query = input("请输入查询(help可查看指令)：")
         if query == "quit":
             break
         elif query.startswith("limit"):
@@ -45,6 +45,10 @@ def run():
                 print("已设置limit为", limit)
             except Exception as e:
                 print("设置limit失败", e)
+            continue
+        elif query == "help":
+            print("输入limit [数字]设置limit")
+            print("输入quit退出")
             continue
         embedding = create_embedding(query)
         texts = storage.get_texts(embedding[1], limit)

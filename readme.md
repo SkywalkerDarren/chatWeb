@@ -25,6 +25,14 @@ make install # may need sudo
 CREATE EXTENSION vector;
 ```
 
+- 环境变量
+
+设置`OPENAI_API_KEY`为你的openai的api key
+
+```shell
+export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
 - 安装依赖
 
 ```
