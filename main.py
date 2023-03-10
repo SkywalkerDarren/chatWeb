@@ -9,12 +9,17 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from newspaper import Article
 
 Base = declarative_base()
-
+SQL_URL = "postgresql://localhost:5432/mydb"
 
 def run():
     """Run the application."""
-    url = input("请输入文章链接：")
-    contents = web_crawler(url)
+    while True:
+        try:
+            url = input("请输入文章链接：")
+            contents = web_crawler(url)
+            break
+        except Exception as e:
+            print("Error:", e)
     print("文章已抓取，片段数量：", len(contents))
     for content in contents:
         print('\t', content)
@@ -25,6 +30,8 @@ def run():
     storage = Storage()
     storage.clear()
     storage.add_all(embeddings)
+    print("已存储嵌入")
+    print("=====================================")
 
     limit = 30
     while True:
@@ -47,6 +54,7 @@ def run():
 
         answer = completion(query, texts)
         print(answer.strip())
+        print("=====================================")
 
     storage.clear()
 
@@ -127,7 +135,7 @@ class Storage:
 
     def __init__(self):
         """Initialize the storage."""
-        self._postgresql = "postgresql://localhost:5432/mydb"
+        self._postgresql = SQL_URL
         self._engine = create_engine(self._postgresql)
         Base.metadata.create_all(self._engine)
         Session = sessionmaker(bind=self._engine)
