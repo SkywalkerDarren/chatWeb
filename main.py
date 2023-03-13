@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 from typing import *
 
+import numpy as np
 import openai
+from newspaper import Article
 from pgvector.sqlalchemy import Vector
+from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-from newspaper import Article
 
 Base = declarative_base()
 SQL_URL = "postgresql://localhost:5432/mydb"
+
 
 def run():
     """Run the application."""
@@ -25,12 +28,16 @@ def run():
         print('\t', content)
 
     embeddings, tokens = create_embeddings(contents)
-    print("已创建嵌入，嵌入数量：", len(embeddings), "，使用的令牌数：", tokens)
+    print("已创建嵌入，嵌入数量：", len(embeddings), "，使用的令牌数：", tokens, "，花费：", tokens / 1000 * 0.0004, "美元")
 
     storage = Storage()
     storage.clear()
     storage.add_all(embeddings)
     print("已存储嵌入")
+    print("=====================================")
+
+    summary = generate_summary(embeddings, num_candidates=20)
+    print(f"已生成摘要：{summary}")
     print("=====================================")
 
     limit = 30
@@ -95,7 +102,7 @@ def completion(query: str, context: list[str]) -> str:
             {'role': 'user', 'content': query},
         ],
     )
-    print("使用的tokens：", response.usage.total_tokens)
+    print("使用的tokens：", response.usage.total_tokens, "，花费：", response.usage.total_tokens / 1000 * 0.002, "美元")
     return response.choices[0].message.content
 
 
@@ -132,6 +139,40 @@ def create_embeddings(input: list[str]) -> (list[tuple[str, list[float]]], int):
         tokens += tk
         result.extend(ebd)
     return result, tokens
+
+
+def generate_summary(embeddings, num_candidates=3):
+    paragraphs = [e[0] for e in embeddings]
+    embeddings = np.array([e[1] for e in embeddings])
+    # 计算每个段落与整个文本的相似度分数
+    similarity_scores = cosine_similarity(embeddings, embeddings[0].reshape(1, -1)).flatten()
+
+    # 选择具有最高相似度分数的段落作为摘要的候选段落
+    candidate_indices = np.argsort(similarity_scores)[::-1][:num_candidates]
+    candidate_paragraphs = [paragraphs[i] for i in candidate_indices]
+
+    print("完成计算，开始生成摘要")
+
+    lens = [len(text) for text in candidate_paragraphs]
+
+    maximum = 3000
+    for index, l in enumerate(lens):
+        maximum -= l
+        if maximum < 0:
+            candidate_paragraphs = candidate_paragraphs[:index + 1]
+            print("超过最大长度，截断到前", index + 1, "个片段")
+            break
+
+    text = "\n".join(f"{index}. {text}" for index, text in enumerate(candidate_paragraphs))
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {'role': 'system',
+             'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你需要从这些相关内容中总结全文内容，最后的结果需要用中文展示：\n\n{text}\n\n中文总结：'},
+        ],
+    )
+    print("使用的tokens：", response.usage.total_tokens, "，花费：", response.usage.total_tokens / 1000 * 0.002, "美元")
+    return response.choices[0].message.content
 
 
 class Storage:
