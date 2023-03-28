@@ -39,6 +39,7 @@ jieba==0.42.1
 jieba3k==0.35.1
 jmespath==1.0.1
 joblib==1.2.0
+jusText==3.0.0
 langdetect==1.0.9
 lxml==4.9.2
 multidict==6.0.4
@@ -84,6 +85,7 @@ six==1.16.0
 soupsieve==2.4
 SQLAlchemy==2.0.5.post1
 threadpoolctl==3.1.0
+tiktoken==0.3.2
 tinysegmenter==0.3
 tldextract==3.4.0
 tqdm==4.65.0
