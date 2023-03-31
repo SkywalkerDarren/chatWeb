@@ -19,13 +19,7 @@ class AI:
     def completion(self, query: str, context: list[str]) -> str:
         """Create a completion."""
 
-        maximum = 4096 - 1024
-        for index, text in enumerate(context):
-            maximum -= self.num_tokens_from_string(text)
-            if maximum < 0:
-                context = context[:index + 1]
-                print("超过最大长度，截断到前", index + 1, "个片段")
-                break
+        context = self._cut_texts(context)
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(context))
         response = openai.ChatCompletion.create(
@@ -41,12 +35,23 @@ class AI:
               "美元")
         return response.choices[0].message.content
 
-    def create_embedding(self, text: str) -> (str, list[float]):
+    def _cut_texts(self, context):
+        maximum = 4096 - 1024
+        for index, text in enumerate(context):
+            maximum -= self.num_tokens_from_string(text)
+            if maximum < 0:
+                context = context[:index + 1]
+                print("超过最大长度，截断到前", index + 1, "个片段")
+                break
+        return context
+
+    @staticmethod
+    def create_embedding(text: str) -> (str, list[float]):
         """Create an embedding for the provided text."""
         embedding = openai.Embedding.create(model="text-embedding-ada-002", input=text)
         return text, embedding.data[0].embedding
 
-    def create_embeddings(self, input: list[str]) -> (list[tuple[str, list[float]]], int):
+    def create_embeddings(self, texts: list[str]) -> (list[tuple[str, list[float]]], int):
         """Create embeddings for the provided input."""
         result = []
         query_len = 0
@@ -55,13 +60,13 @@ class AI:
 
         def get_embedding(input_slice: list[str]):
             embedding = openai.Embedding.create(model="text-embedding-ada-002", input=input_slice)
-            return [(text, data.embedding) for text, data in
+            return [(txt, data.embedding) for txt, data in
                     zip(input_slice, embedding.data)], embedding.usage.total_tokens
 
-        for index, text in enumerate(input):
+        for index, text in enumerate(texts):
             query_len += self.num_tokens_from_string(text)
             if query_len > 8192 - 1024:
-                ebd, tk = get_embedding(input[start_index:index + 1])
+                ebd, tk = get_embedding(texts[start_index:index + 1])
                 print("查询片段 使用的tokens：", tk, "，花费：", tk / 1000 * 0.0004, "美元")
                 query_len = 0
                 start_index = index + 1
@@ -69,7 +74,7 @@ class AI:
                 result.extend(ebd)
 
         if query_len > 0:
-            ebd, tk = get_embedding(input[start_index:])
+            ebd, tk = get_embedding(texts[start_index:])
             print("查询片段 使用的tokens：", tk, "，花费：", tk / 1000 * 0.0004, "美元")
             tokens += tk
             result.extend(ebd)
@@ -77,7 +82,7 @@ class AI:
 
     def generate_summary(self, embeddings, num_candidates=3, use_sif=False):
         """Generate a summary for the provided embeddings."""
-        avg_func = self.calc_paragraph_avg_embedding_with_sif if use_sif else self.calc_avg_embedding
+        avg_func = self._calc_paragraph_avg_embedding_with_sif if use_sif else self._calc_avg_embedding
         avg_embedding = np.array(avg_func(embeddings))
 
         paragraphs = [e[0] for e in embeddings]
@@ -91,13 +96,7 @@ class AI:
 
         print("完成计算，开始生成摘要")
 
-        maximum = 4096 - 1024
-        for index, text in enumerate(candidate_paragraphs):
-            maximum -= self.num_tokens_from_string(text)
-            if maximum < 0:
-                candidate_paragraphs = candidate_paragraphs[:index + 1]
-                print("超过最大长度，截断到前", index + 1, "个片段")
-                break
+        candidate_paragraphs = self._cut_texts(candidate_paragraphs)
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(candidate_paragraphs))
         response = openai.ChatCompletion.create(
@@ -111,7 +110,8 @@ class AI:
               "美元")
         return response.choices[0].message.content
 
-    def calc_avg_embedding(self, embeddings) -> list[float]:
+    @staticmethod
+    def _calc_avg_embedding(embeddings) -> list[float]:
         # 没有权重
         avg_embedding = np.zeros(len(embeddings[0][1]))
         for emb in embeddings:
@@ -119,7 +119,9 @@ class AI:
         avg_embedding /= len(embeddings)
         return avg_embedding.tolist()
 
-    def calc_paragraph_avg_embedding_with_sif(self, paragraph_list, alpha=0.001) -> list[float]:
+    @staticmethod
+    def _calc_paragraph_avg_embedding_with_sif(paragraph_list) -> list[float]:
+        alpha = 0.001
         # 中文不适用
         # calculate the total number of sentences
         n_sentences = len(paragraph_list)

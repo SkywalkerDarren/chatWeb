@@ -3,7 +3,7 @@
 
 from ai import AI
 from contents import get_contents
-from storage import Storage
+from storage import MemoryStorage
 
 
 def run():
@@ -20,7 +20,7 @@ def run():
     embeddings, tokens = ai.create_embeddings(contents)
     print("已创建嵌入，嵌入数量：", len(embeddings), "，使用的令牌数：", tokens, "，花费：", tokens / 1000 * 0.0004, "美元")
 
-    storage = Storage()
+    storage = MemoryStorage()
     storage.clear()
     storage.add_all(embeddings)
     print("已存储嵌入")
