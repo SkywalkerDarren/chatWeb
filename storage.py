@@ -1,3 +1,7 @@
+import os.path
+import faiss
+import numpy as np
+import pandas as pd
 from pgvector.sqlalchemy import Vector
 
 from sqlalchemy import create_engine, Column, Integer, String
@@ -11,6 +15,17 @@ SQL_URL = "postgresql://localhost:5432/mydb"
 class Storage(ABC):
     """Abstract Storage class."""
 
+    # factory method
+    @staticmethod
+    def create_storage(storage_type: str) -> 'Storage':
+        """Create a storage object."""
+        if storage_type == 'index':
+            return _IndexStorage()
+        elif storage_type == 'postgres':
+            return _PostgresStorage()
+        else:
+            raise ValueError(f'Unknown storage type: {storage_type}')
+
     @abstractmethod
     def add(self, text: str, embedding: list[float]):
         """Add a new embedding."""
@@ -32,39 +47,62 @@ class Storage(ABC):
         pass
 
 
-class MemoryStorage(Storage):
-    """MemoryStorage class."""
+class _IndexStorage(Storage):
+    """IndexStorage class."""
 
     def __init__(self):
         """Initialize the storage."""
-        self._embeddings = []
+        self.texts = None
+        self.index = None
+        self._load()
 
     def add(self, text: str, embedding: list[float]):
         """Add a new embedding."""
-        self._embeddings.append((text, embedding))
+        array = np.array([embedding])
+        self.texts = pd.concat([self.texts, pd.DataFrame({'index': len(self.texts), 'text': text}, index=[0])])
+        self.index.add(array)
+        self._save()
 
     def add_all(self, embeddings: list[tuple[str, list[float]]]):
         """Add multiple embeddings."""
-        self._embeddings.extend(embeddings)
+        self.texts = pd.concat([self.texts, pd.DataFrame(
+            {'index': len(self.texts) + i, 'text': text} for i, (text, _) in enumerate(embeddings))])
+        array = np.array([emb for text, emb in embeddings])
+        self.index.add(array)
+        self._save()
 
-    def get_texts(self, embedding: list[float], limit=100) -> list[str]:
-        """Get the text for the provided embedding."""
-        return self._cosine_similarity(embedding)[:limit]
-
-    def _cosine_similarity(self, src: list[float]) -> list[str]:
-        """Calculate the cosine similarity between the src and all embeddings."""
-        from sklearn.metrics.pairwise import cosine_similarity
-        embeddings = [emb for text, emb in self._embeddings]
-        similarities = sorted(enumerate(cosine_similarity([src], embeddings)[0]), key=lambda x: x[1], reverse=True)
-        result = [self._embeddings[index][0] for index, similarity in similarities]
-        return result
+    def get_texts(self, embedding: list[float], limit=10) -> list[str]:
+        _, indexs = self.index.search(np.array([embedding]), limit)
+        print(indexs)
+        return self.texts.iloc[indexs[0]].text.tolist()
 
     def clear(self):
         """Clear the database."""
-        self._embeddings = []
+        self._delete()
+
+    def _save(self):
+        self.texts.to_csv('texts.csv')
+        faiss.write_index(self.index, 'index.bin')
+        print('saved')
+
+    def _load(self):
+        if os.path.exists('texts.csv') and os.path.exists('index.bin'):
+            self.texts = pd.read_csv('texts.csv')
+            self.index = faiss.read_index('index.bin')
+        else:
+            self.texts = pd.DataFrame(columns=['index', 'text'])
+            self.index = faiss.IndexFlatIP(1536)
+
+    def _delete(self):
+        try:
+            os.remove('texts.csv')
+            os.remove('index.bin')
+        except FileNotFoundError:
+            pass
+        self._load()
 
 
-class PostgresStorage:
+class _PostgresStorage(Storage):
     """PostgresStorage class."""
 
     def __init__(self):
