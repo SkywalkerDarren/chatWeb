@@ -63,7 +63,7 @@ python main.py
 
 # Example
 ```txt
-请输入文章链接：https://gutenberg.ca/ebooks/clynes-when/clynes-when-00-h.html
+请输入文章链接或pdf/txt/docx文件路径：https://gutenberg.ca/ebooks/clynes-when/clynes-when-00-h.html
 文章已抓取，片段数量： 148
 ...
 查询片段 使用的tokens： 7189 ，花费： 0.0028756000000000003 美元
@@ -91,3 +91,8 @@ python main.py
 =====================================
 请输入查询(help可查看指令)：
 ```
+
+# TODO
+- [x] 支持pdf/txt/docx文件
+- [x] 支持免数据库纯内存
+- [ ] 其他还没想到的
