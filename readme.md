@@ -43,6 +43,9 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## Stream模式
+在main.py中设置`USE_STREAM`为`True`
+
 ## 安装postgresql(可选)
 - 安装postgresql
     - 默认的sql地址: `postgresql://localhost:5432/mydb`
@@ -99,5 +102,6 @@ CREATE EXTENSION vector;
 
 # TODO
 - [x] 支持pdf/txt/docx文件
-- [x] 支持免数据库纯内存
+- [x] 支持免数据库纯内存(faiss)
+- [x] 支持Stream
 - [ ] 其他还没想到的

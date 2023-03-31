@@ -6,6 +6,8 @@ from contents import get_contents
 from storage import Storage
 
 USE_POSTGRES = False
+USE_STREAM = False
+SQL_URL = "postgresql://localhost:5432/mydb"
 
 
 def run():
@@ -28,9 +30,8 @@ def run():
     print("已存储嵌入")
     print("=====================================")
     # 2. 生成embedding式摘要，有基于SIF的加权平均和一般的直接求平均，懒得中文分词了这里使用的是直接求平均，英文可以改成SIF
-    summary = ai.generate_summary(embeddings, num_candidates=100,
-                                  use_sif=lang not in ['zh', 'ja', 'ko', 'hi', 'ar', 'fa'])
-    print(f"已生成摘要：{summary}")
+    ai.generate_summary(embeddings, num_candidates=100,
+                        use_sif=lang not in ['zh', 'ja', 'ko', 'hi', 'ar', 'fa'])
     print("=====================================")
 
     while True:
@@ -50,8 +51,7 @@ def run():
         for text in texts[:5]:
             print('\t', text)
         # 3. 把相关片段推给AI，AI会根据这些片段回答问题
-        answer = ai.completion(query, texts)
-        print(answer.strip())
+        ai.completion(query, texts)
         print("=====================================")
 
 

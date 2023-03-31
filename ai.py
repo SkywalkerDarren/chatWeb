@@ -11,29 +11,38 @@ class AI:
     def __init__(self):
         self.encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
+    def _chat_stream(self, messages, use_stream=True):
+        response = openai.ChatCompletion.create(
+            stream=use_stream,
+            model="gpt-3.5-turbo",
+            messages=messages,
+        )
+        if use_stream:
+            for chunk in response:
+                if chunk.choices[0].delta.get('content', None) is not None:
+                    print(chunk.choices[0].delta.content, end='')
+            print()
+        else:
+            print("使用的tokens：", response.usage.total_tokens, "，花费：", response.usage.total_tokens / 1000 * 0.002,
+                  "美元")
+            print(response.choices[0].message.content.strip())
+
     def num_tokens_from_string(self, string: str) -> int:
         """Returns the number of tokens in a text string."""
         num_tokens = len(self.encoding.encode(string))
         return num_tokens
 
-    def completion(self, query: str, context: list[str]) -> str:
+    def completion(self, query: str, context: list[str]):
         """Create a completion."""
 
         context = self._cut_texts(context)
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(context))
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {'role': 'system',
-                 'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序：\n\n{text}'},
-                {'role': 'user', 'content': query},
-
-            ],
-        )
-        print("使用的tokens：", response.usage.total_tokens, "，花费：", response.usage.total_tokens / 1000 * 0.002,
-              "美元")
-        return response.choices[0].message.content
+        self._chat_stream([
+            {'role': 'system',
+             'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序：\n\n{text}'},
+            {'role': 'user', 'content': query},
+        ])
 
     def _cut_texts(self, context):
         maximum = 4096 - 1024
@@ -99,16 +108,10 @@ class AI:
         candidate_paragraphs = self._cut_texts(candidate_paragraphs)
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(candidate_paragraphs))
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {'role': 'system',
-                 'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你需要从这些相关内容中总结全文内容，最后的结果需要用中文展示：\n\n{text}\n\n中文总结：'},
-            ],
-        )
-        print("使用的tokens：", response.usage.total_tokens, "，花费：", response.usage.total_tokens / 1000 * 0.002,
-              "美元")
-        return response.choices[0].message.content
+        self._chat_stream([
+            {'role': 'system',
+             'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你需要从这些相关内容中总结全文内容，最后的结果需要用中文展示：\n\n{text}\n\n中文总结：'},
+        ])
 
     @staticmethod
     def _calc_avg_embedding(embeddings) -> list[float]:

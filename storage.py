@@ -9,7 +9,6 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from abc import ABC, abstractmethod
 
 Base = declarative_base()
-SQL_URL = "postgresql://localhost:5432/mydb"
 
 
 class Storage(ABC):
@@ -73,7 +72,6 @@ class _IndexStorage(Storage):
 
     def get_texts(self, embedding: list[float], limit=10) -> list[str]:
         _, indexs = self.index.search(np.array([embedding]), limit)
-        print(indexs)
         return self.texts.iloc[indexs[0]].text.tolist()
 
     def clear(self):
@@ -83,7 +81,6 @@ class _IndexStorage(Storage):
     def _save(self):
         self.texts.to_csv('texts.csv')
         faiss.write_index(self.index, 'index.bin')
-        print('saved')
 
     def _load(self):
         if os.path.exists('texts.csv') and os.path.exists('index.bin'):
@@ -107,6 +104,7 @@ class _PostgresStorage(Storage):
 
     def __init__(self):
         """Initialize the storage."""
+        from main import SQL_URL
         self._postgresql = SQL_URL
         self._engine = create_engine(self._postgresql)
         Base.metadata.create_all(self._engine)
