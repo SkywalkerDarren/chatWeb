@@ -22,6 +22,28 @@ ChatWeb可以爬取任意网页并提取正文，生成概要，然后根据正�
 # 准备开始
 
 - 安装python3
+
+- 配置环境变量
+
+设置`OPENAI_API_KEY`为你的openai的api key
+
+```shell
+export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+- 安装依赖
+
+```
+pip install -r requirements.txt
+```
+
+- 运行
+
+```
+python main.py
+```
+
+## 安装postgresql(可选)
 - 安装postgresql
     - 默认的sql地址: `postgresql://localhost:5432/mydb`
 - 安装pgvector插件
@@ -41,25 +63,8 @@ make install # may need sudo
 CREATE EXTENSION vector;
 ```
 
-- 环境变量
+在main.py中设置`USE_POSTGRES`为`True`
 
-设置`OPENAI_API_KEY`为你的openai的api key
-
-```shell
-export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-```
-
-- 安装依赖
-
-```
-pip install -r requirements.txt
-```
-
-- 运行
-
-```
-python main.py
-```
 
 # Example
 ```txt
