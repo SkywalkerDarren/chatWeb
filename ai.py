@@ -11,7 +11,8 @@ class AI:
     def __init__(self):
         self.encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
-    def _chat_stream(self, messages, use_stream=True):
+    @staticmethod
+    def _chat_stream(messages: list[dict], use_stream=True):
         response = openai.ChatCompletion.create(
             stream=use_stream,
             model="gpt-3.5-turbo",
@@ -34,7 +35,7 @@ class AI:
 
     def completion(self, query: str, context: list[str]):
         """Create a completion."""
-
+        from main import USE_STREAM
         context = self._cut_texts(context)
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(context))
@@ -42,7 +43,7 @@ class AI:
             {'role': 'system',
              'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序：\n\n{text}'},
             {'role': 'user', 'content': query},
-        ])
+        ], use_stream=USE_STREAM)
 
     def _cut_texts(self, context):
         maximum = 4096 - 1024
@@ -90,6 +91,7 @@ class AI:
         return result, tokens
 
     def generate_summary(self, embeddings, num_candidates=3, use_sif=False):
+        from main import USE_STREAM
         """Generate a summary for the provided embeddings."""
         avg_func = self._calc_paragraph_avg_embedding_with_sif if use_sif else self._calc_avg_embedding
         avg_embedding = np.array(avg_func(embeddings))
@@ -111,7 +113,7 @@ class AI:
         self._chat_stream([
             {'role': 'system',
              'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你需要从这些相关内容中总结全文内容，最后的结果需要用中文展示：\n\n{text}\n\n中文总结：'},
-        ])
+        ], use_stream=USE_STREAM)
 
     @staticmethod
     def _calc_avg_embedding(embeddings) -> list[float]:

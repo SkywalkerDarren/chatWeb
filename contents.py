@@ -1,6 +1,6 @@
 import os
 
-from newspaper import fulltext
+from newspaper import fulltext, Article
 import readability
 import requests
 import docx
@@ -11,7 +11,13 @@ from langdetect import detect
 def web_crawler_newspaper(url: str) -> tuple[list[str], str]:
     """Run the web crawler."""
     raw_html, lang = _get_raw_html(url)
-    text = fulltext(raw_html, language=lang)
+    try:
+        text = fulltext(raw_html, language=lang)
+    except:
+        article = Article(url)
+        article.download()
+        article.parse()
+        text = article.text
     contents = [text.strip() for text in text.splitlines() if text.strip()]
     return contents, lang
 
