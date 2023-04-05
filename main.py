@@ -2,29 +2,28 @@
 # -*- coding: utf-8 -*-
 
 from ai import AI
+from config import Config
 from contents import get_contents
 from storage import Storage
-
-USE_POSTGRES = False
-USE_STREAM = False
-SQL_URL = "postgresql://localhost:5432/mydb"
 
 
 def run():
     """Run the application."""
+    cfg = Config()
+
     contents, lang = get_contents()
 
     print("文章已抓取，片段数量：", len(contents))
     for content in contents:
         print('\t', content)
 
-    ai = AI()
+    ai = AI(cfg)
 
     # 1. 对文章的每个段落生成embedding
     embeddings, tokens = ai.create_embeddings(contents)
     print("已创建嵌入，嵌入数量：", len(embeddings), "，使用的令牌数：", tokens, "，花费：", tokens / 1000 * 0.0004, "美元")
 
-    storage = Storage.create_storage("postgres" if USE_POSTGRES else "index")
+    storage = Storage.create_storage(cfg)
     storage.clear()
     storage.add_all(embeddings)
     print("已存储嵌入")

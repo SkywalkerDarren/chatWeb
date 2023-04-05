@@ -4,21 +4,24 @@ import tiktoken
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from config import Config
+
 
 class AI:
     """The AI class."""
 
-    def __init__(self):
-        self.encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
+    def __init__(self, cfg: Config):
+        openai.api_key = cfg.open_ai_key
+        self._use_stream = cfg.use_stream
+        self._encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
-    @staticmethod
-    def _chat_stream(messages: list[dict], use_stream=True):
+    def _chat_stream(self, messages: list[dict]):
         response = openai.ChatCompletion.create(
-            stream=use_stream,
+            stream=self._use_stream,
             model="gpt-3.5-turbo",
             messages=messages,
         )
-        if use_stream:
+        if self._use_stream:
             for chunk in response:
                 if chunk.choices[0].delta.get('content', None) is not None:
                     print(chunk.choices[0].delta.content, end='')
@@ -28,14 +31,13 @@ class AI:
                   "美元")
             print(response.choices[0].message.content.strip())
 
-    def num_tokens_from_string(self, string: str) -> int:
+    def _num_tokens_from_string(self, string: str) -> int:
         """Returns the number of tokens in a text string."""
-        num_tokens = len(self.encoding.encode(string))
+        num_tokens = len(self._encoding.encode(string))
         return num_tokens
 
     def completion(self, query: str, context: list[str]):
         """Create a completion."""
-        from main import USE_STREAM
         context = self._cut_texts(context)
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(context))
@@ -43,12 +45,12 @@ class AI:
             {'role': 'system',
              'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序：\n\n{text}'},
             {'role': 'user', 'content': query},
-        ], use_stream=USE_STREAM)
+        ])
 
     def _cut_texts(self, context):
         maximum = 4096 - 1024
         for index, text in enumerate(context):
-            maximum -= self.num_tokens_from_string(text)
+            maximum -= self._num_tokens_from_string(text)
             if maximum < 0:
                 context = context[:index + 1]
                 print("超过最大长度，截断到前", index + 1, "个片段")
@@ -74,7 +76,7 @@ class AI:
                     zip(input_slice, embedding.data)], embedding.usage.total_tokens
 
         for index, text in enumerate(texts):
-            query_len += self.num_tokens_from_string(text)
+            query_len += self._num_tokens_from_string(text)
             if query_len > 8192 - 1024:
                 ebd, tk = get_embedding(texts[start_index:index + 1])
                 print("查询片段 使用的tokens：", tk, "，花费：", tk / 1000 * 0.0004, "美元")
@@ -91,7 +93,6 @@ class AI:
         return result, tokens
 
     def generate_summary(self, embeddings, num_candidates=3, use_sif=False):
-        from main import USE_STREAM
         """Generate a summary for the provided embeddings."""
         avg_func = self._calc_paragraph_avg_embedding_with_sif if use_sif else self._calc_avg_embedding
         avg_embedding = np.array(avg_func(embeddings))
@@ -113,7 +114,7 @@ class AI:
         self._chat_stream([
             {'role': 'system',
              'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你需要从这些相关内容中总结全文内容，最后的结果需要用中文展示：\n\n{text}\n\n中文总结：'},
-        ], use_stream=USE_STREAM)
+        ])
 
     @staticmethod
     def _calc_avg_embedding(embeddings) -> list[float]:

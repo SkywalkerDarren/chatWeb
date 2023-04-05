@@ -8,6 +8,8 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from abc import ABC, abstractmethod
 
+from config import Config
+
 Base = declarative_base()
 
 
@@ -16,14 +18,12 @@ class Storage(ABC):
 
     # factory method
     @staticmethod
-    def create_storage(storage_type: str) -> 'Storage':
+    def create_storage(cfg: Config) -> 'Storage':
         """Create a storage object."""
-        if storage_type == 'index':
-            return _IndexStorage()
-        elif storage_type == 'postgres':
-            return _PostgresStorage()
+        if cfg.use_postgres:
+            return _PostgresStorage(cfg)
         else:
-            raise ValueError(f'Unknown storage type: {storage_type}')
+            return _IndexStorage()
 
     @abstractmethod
     def add(self, text: str, embedding: list[float]):
@@ -102,10 +102,9 @@ class _IndexStorage(Storage):
 class _PostgresStorage(Storage):
     """PostgresStorage class."""
 
-    def __init__(self):
+    def __init__(self, cfg: Config):
         """Initialize the storage."""
-        from main import SQL_URL
-        self._postgresql = SQL_URL
+        self._postgresql = cfg.postgres_url
         self._engine = create_engine(self._postgresql)
         Base.metadata.create_all(self._engine)
         session = sessionmaker(bind=self._engine)

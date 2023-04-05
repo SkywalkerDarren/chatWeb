@@ -23,32 +23,34 @@ ChatWeb可以爬取任意网页并提取正文，生成概要，然后根据正�
 
 - 安装python3
 
-- 配置环境变量
+- 下载本仓库`git clone https://github.com/SkywalkerDarren/chatWeb.git`
 
-设置`OPENAI_API_KEY`为你的openai的api key
+- 进入目录`cd chatWeb`
 
-```shell
-export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-```
+- 编辑`config.json`, 设置`open_ai_key`为你的openai的api key
 
 - 安装依赖
 
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 - 运行
 
 ```
-python main.py
+python3 main.py
 ```
 
 ## Stream模式
-在main.py中设置`USE_STREAM`为`True`
+
+- 编辑`config.json`, 设置`use_stream`为`true`
 
 ## 安装postgresql(可选)
+
+- 编辑`config.json`, 设置`use_postgres`为`true`
+
 - 安装postgresql
-    - 默认的sql地址: `postgresql://localhost:5432/mydb`
+    - 默认的sql地址: `postgresql://localhost:5432/mydb`或在`config.json`中设置
 - 安装pgvector插件
 
 编译并安装扩展（支持Postgres 11+）
@@ -66,7 +68,7 @@ make install # may need sudo
 CREATE EXTENSION vector;
 ```
 
-在main.py中设置`USE_POSTGRES`为`True`
+- pip安装依赖`pip3 install psycopg2`
 
 
 # Example
@@ -81,21 +83,18 @@ CREATE EXTENSION vector;
 =====================================
 完成计算，开始生成摘要
 超过最大长度，截断到前 29 个片段
-使用的tokens： 3699 ，花费： 0.007398 美元
-已生成摘要：文章描述了英国社会在近一个世纪内所做出的巨大改变，特别是对妇女和儿童的福利保障。英国已经制定了许多法律法规，以确保每个人都获得公平的教育机会、医疗保障和福利待遇。与50年前相比，英国的教育、医疗、福利和劳动力法规得到了重大改进。英国政府为需要帮助的妇女和儿童提供免费或廉价食品和衣物。此外，英国的贫民窟和缺乏地区得到了重建和扩建。英国还开办了幼儿园和孕产医院，致力于保障孩子们健康、快乐成长。然而，作者指出还有很多需要改进的地方，不管是在教育、医疗、福利还是劳动力领域，英国都有继续前进的道路。
+使用的tokens： 3606 ，花费： 0.007212 美元
+文章描写了英国社会在作者成长过程中取得的变革和进步。该国政府通过各种立法解决了医疗、失业、工伤等问题，改善了工人和儿童的生活，提供了更多的教育和康乐机会。社会福利制度也在不断发展，注重母婴健康，为孩子们提供更好的成长环境。尽管取得了这些成就，但文章也指出仍有许多问题需要解决，如教育个性化和培养卓越人才等。作者鼓励人们意识到已取得的进步，但也不应忘记还有许多工作要做。
 =====================================
-请输入查询(help可查看指令)：讲讲还需要改进的地方
+请输入查询(help可查看指令)：文章中英国社会取得了哪些进步
 已找到相关片段（前5个）：
-	 I could go on to tell how under successive Governments—of all parties—the housing conditions of the people have steadily improved. There are still slums, but they become fewer. There is still overcrowding, but it is decreasing.
-	 Our educational development has reached a high mark, although there is admittedly much to be done. There is still more to be done in the matters of free feeding and general nutrition. Tremendous strides have been made in curative work. We need faster and greater strides in preventive work. Much has been done there during the last quarter of a century, but much remains.
-	 To these improvements I gladly bear testimony. Compared with when I was a boy the condition of the young people is immeasurably better. They are better-fed, better-clothed, better-educated. When I was young, the whole of working-class life was drab, dull and depressing: to-day there is colour and variety that many of we older men never knew.
-	 Here is another and a very vital problem—that of nutrition. It is not much good trying to teach an ill-nourished child. The maternity and child welfare legislation gives power to local authorities to provide food free or at cheap rates to necessitous mothers and young children. That this power is not used nearly to the extent that it should be is not the fault of our system, but is due to many local authorities lagging behind. I said in a recent article that by peaceful means we have secured reforms in working-class life beyond the dreams of our fathers. I added: "Much yet remains to be done and by means of a wholesome discontent more will be obtained."
-	 His conclusion is as follows: "In the creation of an educated democracy complacent satisfaction with the degree of progress so far achieved can find no place. The millennium is still a long way off. So long as there is one child who has failed to obtain the precise educational treatment his individuality requires; so long as a single child goes hungry, has nowhere to play, fails to receive the medical attention he needs; so long as the nation fails to train and provide scope for every atom of outstanding ability it can find; so long as there are administrators or teachers who feel no sense of mission, who cannot administer or who cannot teach, the system will remain incomplete.
-超过最大长度，截断到前 52 个片段
-使用的tokens： 3669 ，花费： 0.007338 美元
-在这篇文章中，虽然作者提到了许多社会改革的进步和成就，但他也承认仍有需要改进的地方，比如儿童营养、工人的福利、教育制度以及公共服务的利用率等等。而且，他强调了持续的改进和不断的努力是必要的，以实现更公正和更平等的社会。
-
-然而，这篇文章是在1941年写的，现在已经过去了80多年。虽然很多问题得到了改善，但还有许多仍然存在。例如，许多人仍然面临着低收入、低福利和高房价的问题，许多儿童仍然面临营养不良和教育资源不足的问题，还有许多社区缺乏充足的医疗和公共服务。因此，我们需要继续努力，追求更好的生活和更公正的社会。
+	 Relate that significant change to other remarkable changes and it is possible to have some idea of what this new and developing social England means to all of us. And to the weaving of this fabric of our material life our magnificent social services have made a great contribution.
+	 And now what does our country do for its citizens when they are grown-up and go out in the world? It is impossible to answer that question without feeling a glow of pride in our achievements. Looking back again on the changes I have seen in my own lifetime, I am amazed at the tremendous strides that have been made in providing greater comfort, happiness and security for the men and women of Britain. I am not complacent; I am not satisfied. There are many reforms yet to be made; much progress still to be registered, but it would be ungenerous and unreal not to recognise all that has been done.
+	 I would like to quote again from this valuable and revealing book a passage which seems to me singularly appropriate at the moment: "Nothing is more exasperating to those to whom social reform is religion in action than the readiness with which the English neglect, forget or minimise their achievements. The visitor from Central Europe will tell with enthusiasm of the decline of illiteracy in his country since the war. The Englishman scarcely knows the meaning of the word, still less does he trouble to enquire whether illiteracy still exists in England.
+	 There is more opportunity for leisure; in the old days all work and no play made Jack a very dull boy. Hours of labour are shorter, conditions of employment better, wages higher. And much of this improved standard is due to the work of the Trade Union and Labour Movement which has banded men and women together in democratic organisations in order to make life more tolerable for all. But, of course, it is not the work of the Trade Union and Labour Movement only. To pioneers like Robert Owen and Lord Shaftesbury, to countless men and women of goodwill who have never identified themselves with any Party, to progressively minded people in all the political Parties, the workers and the nation owe an incalculable debt.
+	 All this is what Britain has done, and is doing, for its women and children with the object of building up a healthy people fit to play their proper part in the work of the nation.
+使用的tokens： 1022 ，花费： 0.0020440000000000002 美元
+文章提到英国在多个方面取得了进步，包括提供更好的福利、增加休闲时间、改善劳动条件、提高工资、改进教育系统、改善妇女和儿童的状况、减少未成年犯罪、创建公共机构等等。这些进步为英国的发展和社会进步做出了巨大贡献。
 =====================================
 请输入查询(help可查看指令)：
 ```

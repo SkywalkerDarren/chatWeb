@@ -1,0 +1,6 @@
+/venv
+/.idea
+/.vscode
+/index.bin
+/texts.csv
+/config.json
