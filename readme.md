@@ -27,6 +27,8 @@ ChatWeb可以爬取任意网页并提取正文，生成概要，然后根据正�
 
 - 进入目录`cd chatWeb`
 
+- 停止对`config.json`的跟踪`git update-index --assume-unchanged config.json`
+
 - 编辑`config.json`, 设置`open_ai_key`为你的openai的api key
 
 - 安装依赖
