@@ -1,5 +1,6 @@
 aiohttp
 aiosignal
+anyio
 async-timeout
 attrs
 beautifulsoup4
@@ -7,12 +8,16 @@ certifi
 chardet
 charset-normalizer
 click
+colorama
 cssselect
 faiss-cpu
+fastapi
 feedfinder2
 feedparser
 filelock
 frozenlist
+greenlet
+h11
 idna
 jieba3k
 joblib
@@ -26,6 +31,7 @@ openai
 pandas
 pgvector
 Pillow
+pydantic
 PyPDF2
 python-dateutil
 python-docx
@@ -39,8 +45,10 @@ scikit-learn
 scipy
 sgmllib3k
 six
+sniffio
 soupsieve
 SQLAlchemy
+starlette
 threadpoolctl
 tiktoken
 tinysegmenter
@@ -48,4 +56,6 @@ tldextract
 tqdm
 typing_extensions
 urllib3
+uvicorn
+xxhash
 yarl
