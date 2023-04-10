@@ -2,5 +2,8 @@
   "open_ai_key": "",
   "use_stream": false,
   "use_postgres": false,
-  "postgres_url": "postgresql://localhost:5432/mydb"
+  "postgres_url": "postgresql://localhost:5432/mydb",
+  "mode": "api",
+  "api_port": 9531,
+  "api_host": "localhost"
 }
