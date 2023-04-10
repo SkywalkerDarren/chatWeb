@@ -6,6 +6,7 @@ import requests
 import docx
 import PyPDF2
 from langdetect import detect
+import xxhash
 
 
 def web_crawler_newspaper(url: str) -> tuple[list[str], str]:
@@ -68,7 +69,7 @@ def extract_text_from_docx(file_path: str) -> tuple[list[str], str]:
     return contents, lang[0:2]
 
 
-def get_contents() -> tuple[list[str], str]:
+def get_contents() -> tuple[list[str], str, str]:
     """Get the contents."""
 
     while True:
@@ -76,12 +77,16 @@ def get_contents() -> tuple[list[str], str]:
             url = input("请输入文章链接或pdf/txt/docx文件路径：")
             if os.path.exists(url):
                 if url.endswith('.pdf'):
-                    return extract_text_from_pdf(url)
+                    contents, data = extract_text_from_pdf(url)
                 elif url.endswith('.txt'):
-                    return extract_text_from_txt(url)
+                    contents, data = extract_text_from_txt(url)
                 elif url.endswith('.docx'):
-                    return extract_text_from_docx(url)
+                    contents, data = extract_text_from_docx(url)
+                else:
+                    print("不支持的文件格式")
+                    continue
             else:
-                return web_crawler_newspaper(url)
+                contents, data = web_crawler_newspaper(url)
+            return contents, data, xxhash.xxh3_128_hexdigest('\n'.join(contents))
         except Exception as e:
             print("Error:", e)
