@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import os
+
 import xxhash
 from pydantic import BaseModel
 
@@ -80,6 +82,12 @@ def api(cfg: Config):
     cfg.use_stream = False
     ai = AI(cfg)
     storage_dict = {}
+    if not cfg.use_postgres:
+        for _, _, files in os.walk(cfg.index_path):
+            for file in files:
+                if file.endswith('.bin') and f'{file[:-4]}.csv' in files:
+                    hash_id = file[:-4]
+                    storage_dict[hash_id] = Storage.create_storage(cfg, hash_id)
 
     app = FastAPI()
 

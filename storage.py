@@ -25,7 +25,7 @@ class Storage(ABC):
         if cfg.use_postgres:
             return _PostgresStorage(cfg, name)
         else:
-            return _IndexStorage(name)
+            return _IndexStorage(cfg, name)
 
     @abstractmethod
     def add(self, text: str, embedding: list[float]):
@@ -61,10 +61,11 @@ class Storage(ABC):
 class _IndexStorage(Storage):
     """IndexStorage class."""
 
-    def __init__(self, name: str):
+    def __init__(self, cfg: Config, name: str):
         """Initialize the storage."""
         self.texts = None
         self.index: Optional[faiss.IndexIDMap] = None
+        self._cfg = cfg
         self._name = name
         self._load()
 
@@ -104,16 +105,17 @@ class _IndexStorage(Storage):
         self._delete()
 
     def been_indexed(self) -> bool:
-        return os.path.exists(f'{self._name}.csv') and os.path.exists(f'{self._name}.bin')
+        return os.path.exists(os.path.join(self._cfg.index_path, f'{self._name}.csv')) and os.path.exists(
+            os.path.join(self._cfg.index_path, f'{self._name}.bin'))
 
     def _save(self):
-        self.texts.to_csv(f'{self._name}.csv')
-        faiss.write_index(self.index, f'{self._name}.bin')
+        self.texts.to_csv(os.path.join(self._cfg.index_path, f'{self._name}.csv'))
+        faiss.write_index(self.index, os.path.join(self._cfg.index_path, f'{self._name}.bin'))
 
     def _load(self):
         if self.been_indexed():
-            self.texts = pd.read_csv(f'{self._name}.csv')
-            self.index = faiss.read_index(f'{self._name}.bin')
+            self.texts = pd.read_csv(os.path.join(self._cfg.index_path, f'{self._name}.csv'))
+            self.index = faiss.read_index(os.path.join(self._cfg.index_path, f'{self._name}.bin'))
         else:
             self.texts = pd.DataFrame(columns=['index', 'text'])
             # IDMap2 with Flat
