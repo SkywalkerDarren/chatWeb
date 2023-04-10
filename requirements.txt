@@ -35,6 +35,7 @@ pydantic
 PyPDF2
 python-dateutil
 python-docx
+python-multipart
 pytz
 PyYAML
 readability-lxml

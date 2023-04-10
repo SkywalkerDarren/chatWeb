@@ -7,7 +7,8 @@ from pydantic import BaseModel
 
 from ai import AI
 from config import Config
-from contents import get_contents, web_crawler_newspaper
+from contents import get_contents, web_crawler_newspaper, extract_text_from_txt, extract_text_from_docx, \
+    extract_text_from_pdf
 from storage import Storage
 
 
@@ -77,17 +78,22 @@ def console(cfg: Config):
 def api(cfg: Config):
     """Run the API."""
     import uvicorn
-    from fastapi import FastAPI
+    from fastapi import FastAPI, UploadFile, File
+    import shutil
 
     cfg.use_stream = False
     ai = AI(cfg)
     storage_dict = {}
-    if not cfg.use_postgres:
-        for _, _, files in os.walk(cfg.index_path):
-            for file in files:
-                if file.endswith('.bin') and f'{file[:-4]}.csv' in files:
-                    hash_id = file[:-4]
-                    storage_dict[hash_id] = Storage.create_storage(cfg, hash_id)
+
+    def init_storage():
+        if not cfg.use_postgres:
+            for _, _, files in os.walk(cfg.index_path):
+                for file in files:
+                    if file.endswith('.bin') and f'{file[:-4]}.csv' in files:
+                        hash_id = file[:-4]
+                        storage_dict[hash_id] = Storage.create_storage(cfg, hash_id)
+
+    init_storage()
 
     app = FastAPI()
 
@@ -103,6 +109,10 @@ def api(cfg: Config):
         """Crawler the URL."""
         contents, lang = web_crawler_newspaper(req.url)
         hash_id = xxhash.xxh3_128_hexdigest('\n'.join(contents))
+        tokens = _save_to_storage(contents, hash_id)
+        return {"code": 0, "msg": "ok", "data": {"uri": f"{hash_id}/{lang}", "tokens": tokens}}
+
+    def _save_to_storage(contents, hash_id):
         if hash_id not in storage_dict:
             storage = Storage.create_storage(cfg, hash_id)
             if storage.been_indexed():
@@ -113,6 +123,28 @@ def api(cfg: Config):
             storage_dict[hash_id] = storage
         else:
             tokens = 0
+        return tokens
+
+    @app.post("/upload_file")
+    async def create_upload_file(file: UploadFile = File(...)):
+        """Upload file."""
+        # save file to disk
+        file_name = file.filename
+        os.makedirs('./upload', exist_ok=True)
+        upload_path = os.path.join('./upload', file_name)
+        with open(upload_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        if file_name.endswith('.pdf'):
+            contents, lang = extract_text_from_pdf(upload_path)
+        elif file_name.endswith('.txt'):
+            contents, lang = extract_text_from_txt(upload_path)
+        elif file_name.endswith('.docx'):
+            contents, lang = extract_text_from_docx(upload_path)
+        else:
+            return {"code": 1, "msg": "not support", "data": {}}
+        hash_id = xxhash.xxh3_128_hexdigest('\n'.join(contents))
+        tokens = _save_to_storage(contents, hash_id)
+        os.remove(upload_path)
         return {"code": 0, "msg": "ok", "data": {"uri": f"{hash_id}/{lang}", "tokens": tokens}}
 
     @app.get("/summary")
