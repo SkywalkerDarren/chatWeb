@@ -20,40 +20,35 @@ class Storage(ABC):
 
     # factory method
     @staticmethod
-    def create_storage(cfg: Config, name: str) -> 'Storage':
+    def create_storage(cfg: Config) -> 'Storage':
         """Create a storage object."""
         if cfg.use_postgres:
-            return _PostgresStorage(cfg, name)
+            return _PostgresStorage(cfg)
         else:
-            return _IndexStorage(cfg, name)
+            return _IndexStorage(cfg)
 
     @abstractmethod
-    def add(self, text: str, embedding: list[float]):
-        """Add a new embedding."""
-        pass
-
-    @abstractmethod
-    def add_all(self, embeddings: list[tuple[str, list[float]]]):
+    def add_all(self, embeddings: list[tuple[str, list[float]]], name: str):
         """Add multiple embeddings."""
         pass
 
     @abstractmethod
-    def get_texts(self, embedding: list[float], limit=100) -> list[str]:
+    def get_texts(self, embedding: list[float], name: str, limit=100) -> list[str]:
         """Get the text for the provided embedding."""
         pass
 
     @abstractmethod
-    def get_all_embeddings(self):
+    def get_all_embeddings(self, name: str):
         """Get all embeddings."""
         pass
 
     @abstractmethod
-    def clear(self):
+    def clear(self, name: str):
         """Clear the database."""
         pass
 
     @abstractmethod
-    def been_indexed(self) -> bool:
+    def been_indexed(self, name: str) -> bool:
         """Check if the database has been indexed."""
         pass
 
@@ -61,116 +56,109 @@ class Storage(ABC):
 class _IndexStorage(Storage):
     """IndexStorage class."""
 
-    def __init__(self, cfg: Config, name: str):
+    def __init__(self, cfg: Config):
         """Initialize the storage."""
-        self.texts = None
-        self.index: Optional[faiss.IndexIDMap] = None
         self._cfg = cfg
-        self._name = name
-        self._load()
 
-    def add(self, text: str, embedding: list[float]):
-        """Add a new embedding."""
-        array = np.array([embedding])
-        self.texts = pd.concat([self.texts, pd.DataFrame({'index': len(self.texts), 'text': text}, index=[0])])
-        self.index.add_with_ids(array, np.array([len(self.texts) - 1]))
-        self._save()
-
-    def add_all(self, embeddings: list[tuple[str, list[float]]]):
+    def add_all(self, embeddings: list[tuple[str, list[float]]], name):
         """Add multiple embeddings."""
-        ids = np.array([len(self.texts) + i for i, _ in enumerate(embeddings)])
-        self.texts = pd.concat([self.texts, pd.DataFrame(
-            {'index': len(self.texts) + i, 'text': text} for i, (text, _) in enumerate(embeddings))])
+        texts, index = self._load(name)
+        ids = np.array([len(texts) + i for i, _ in enumerate(embeddings)])
+        texts = pd.concat([texts, pd.DataFrame(
+            {'index': len(texts) + i, 'text': text} for i, (text, _) in enumerate(embeddings))])
         array = np.array([emb for text, emb in embeddings])
-        self.index.add_with_ids(array, ids)
-        self._save()
+        index.add_with_ids(array, ids)
+        self._save(texts, index, name)
 
-    def update_embedding(self, index: int, embedding: list[float]):
-        """Update the embedding for the provided index."""
-        self.index.remove_ids(np.array([index]))
-        self.index.add_with_ids(np.array([embedding]), np.array([index]))
-        self._save()
+    def get_texts(self, embedding: list[float], name: str, limit=10) -> list[str]:
+        """Get the text for the provided embedding."""
+        texts, index = self._load(name)
+        _, indexs = index.search(np.array([embedding]), limit)
+        return texts.iloc[indexs[0]].text.tolist()
 
-    def get_texts(self, embedding: list[float], limit=10) -> list[str]:
-        _, indexs = self.index.search(np.array([embedding]), limit)
-        return self.texts.iloc[indexs[0]].text.tolist()
-
-    def get_all_embeddings(self):
-        texts = self.texts.text.tolist()
-        embeddings = self.index.reconstruct_n(0, len(self.texts))
+    def get_all_embeddings(self, name: str):
+        texts, index = self._load(name)
+        texts = texts.text.tolist()
+        embeddings = index.reconstruct_n(0, len(texts))
         return list(zip(texts, embeddings))
 
-    def clear(self):
+    def clear(self, name: str):
         """Clear the database."""
-        self._delete()
+        self._delete(name)
 
-    def been_indexed(self) -> bool:
-        return os.path.exists(os.path.join(self._cfg.index_path, f'{self._name}.csv')) and os.path.exists(
-            os.path.join(self._cfg.index_path, f'{self._name}.bin'))
+    def been_indexed(self, name: str) -> bool:
+        return os.path.exists(os.path.join(self._cfg.index_path, f'{name}.csv')) and os.path.exists(
+            os.path.join(self._cfg.index_path, f'{name}.bin'))
 
-    def _save(self):
-        self.texts.to_csv(os.path.join(self._cfg.index_path, f'{self._name}.csv'))
-        faiss.write_index(self.index, os.path.join(self._cfg.index_path, f'{self._name}.bin'))
+    def _save(self, texts, index, name: str):
+        texts.to_csv(os.path.join(self._cfg.index_path, f'{name}.csv'))
+        faiss.write_index(index, os.path.join(self._cfg.index_path, f'{name}.bin'))
 
-    def _load(self):
-        if self.been_indexed():
-            self.texts = pd.read_csv(os.path.join(self._cfg.index_path, f'{self._name}.csv'))
-            self.index = faiss.read_index(os.path.join(self._cfg.index_path, f'{self._name}.bin'))
+    def _load(self, name: str):
+        if self.been_indexed(name):
+            texts = pd.read_csv(os.path.join(self._cfg.index_path, f'{name}.csv'))
+            index = faiss.read_index(os.path.join(self._cfg.index_path, f'{name}.bin'))
         else:
-            self.texts = pd.DataFrame(columns=['index', 'text'])
+            texts = pd.DataFrame(columns=['index', 'text'])
             # IDMap2 with Flat
-            self.index = faiss.index_factory(1536, "IDMap2,Flat", faiss.METRIC_INNER_PRODUCT)
+            index = faiss.index_factory(1536, "IDMap2,Flat", faiss.METRIC_INNER_PRODUCT)
+        return texts, index
 
-    def _delete(self):
+    def _delete(self, name: str):
         try:
-            os.remove(f'{self._name}.csv')
-            os.remove(f'{self._name}.bin')
+            os.remove(os.path.join(self._cfg.index_path, f'{name}.csv'))
+            os.remove(os.path.join(self._cfg.index_path, f'{name}.bin'))
         except FileNotFoundError:
             pass
-        self._load()
 
 
+def singleton(cls):
+    instances = {}
+
+    def get_instance(cfg):
+        if cls not in instances:
+            instances[cls] = cls(cfg)
+        return instances[cls]
+
+    return get_instance
+
+
+@singleton
 class _PostgresStorage(Storage):
     """PostgresStorage class."""
 
-    def __init__(self, cfg: Config, name: str):
+    def __init__(self, cfg: Config):
         """Initialize the storage."""
         self._postgresql = cfg.postgres_url
         self._engine = create_engine(self._postgresql)
         Base.metadata.create_all(self._engine)
         session = sessionmaker(bind=self._engine)
         self._session = session()
-        self._name = name
 
-    def add(self, text: str, embedding: list[float]):
-        """Add a new embedding."""
-        self._session.add(self.EmbeddingEntity(text=text, embedding=embedding, name=self._name))
-        self._session.commit()
-
-    def add_all(self, embeddings: list[tuple[str, list[float]]]):
+    def add_all(self, embeddings: list[tuple[str, list[float]]], name: str):
         """Add multiple embeddings."""
-        data = [self.EmbeddingEntity(text=text, embedding=embedding, name=self._name) for text, embedding in embeddings]
+        data = [self.EmbeddingEntity(text=text, embedding=embedding, name=name) for text, embedding in embeddings]
         self._session.add_all(data)
         self._session.commit()
 
-    def get_texts(self, embedding: list[float], limit=100) -> list[str]:
+    def get_texts(self, embedding: list[float], name: str, limit=100) -> list[str]:
         """Get the text for the provided embedding."""
-        result = self._session.query(self.EmbeddingEntity).order_by(
+        result = self._session.query(self.EmbeddingEntity).where(self.EmbeddingEntity.name == name).order_by(
             self.EmbeddingEntity.embedding.cosine_distance(embedding)).limit(limit).all()
         return [s.text for s in result]
 
-    def get_all_embeddings(self):
+    def get_all_embeddings(self, name: str):
         """Get all embeddings."""
-        result = self._session.query(self.EmbeddingEntity).where(self.EmbeddingEntity.name == self._name).all()
+        result = self._session.query(self.EmbeddingEntity).where(self.EmbeddingEntity.name == name).all()
         return [(s.text, s.embedding) for s in result]
 
-    def clear(self):
+    def clear(self, name: str):
         """Clear the database."""
-        self._session.query(self.EmbeddingEntity).delete()
+        self._session.query(self.EmbeddingEntity).where(self.EmbeddingEntity.name == name).delete()
         self._session.commit()
 
-    def been_indexed(self) -> bool:
-        return self._session.query(self.EmbeddingEntity).filter_by(name=self._name).first() is not None
+    def been_indexed(self, name: str) -> bool:
+        return self._session.query(self.EmbeddingEntity).filter_by(name=name).first() is not None
 
     def __del__(self):
         """Close the session."""

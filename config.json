@@ -4,7 +4,7 @@
   "use_postgres": false,
   "index_path": "./temp",
   "postgres_url": "postgresql://localhost:5432/mydb",
-  "mode": "api",
+  "mode": "console",
   "api_port": 9531,
   "api_host": "localhost"
 }
