@@ -34,7 +34,7 @@ def console(cfg: Config):
         print("=====================================")
 
     while True:
-        query = input("请输入查询(help可查看指令)：")
+        query = input("请输入查询(/help可查看指令)：")
         if query == "/quit":
             break
         elif query == "/summary":
@@ -52,7 +52,7 @@ def console(cfg: Config):
             print("已存储嵌入")
             print("=====================================")
             continue
-        elif query == "help":
+        elif query == "/help":
             print("输入/summary生成嵌入式摘要")
             print("输入/reindex重新索引")
             print("输入/quit退出")

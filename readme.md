@@ -47,6 +47,12 @@ python3 main.py
 
 - 编辑`config.json`, 设置`use_stream`为`true`
 
+## 模式选择
+
+- 编辑`config.json`, 设置`mode`为`console`或`api`可选择启动模式。
+- `console`模式下，输入`/help`查看指令
+- `api`模式下，可对外提供api服务，在`config.json`中可设置`api_port`和`api_host`
+
 ## 安装postgresql(可选)
 
 - 编辑`config.json`, 设置`use_postgres`为`true`
@@ -105,4 +111,5 @@ CREATE EXTENSION vector;
 - [x] 支持pdf/txt/docx文件
 - [x] 支持免数据库纯内存(faiss)
 - [x] 支持Stream
+- [x] 支持API
 - [ ] 其他还没想到的
