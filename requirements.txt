@@ -18,6 +18,7 @@ filelock
 frozenlist
 greenlet
 h11
+httptools
 idna
 jieba3k
 joblib
@@ -33,8 +34,10 @@ pgvector
 Pillow
 pydantic
 PyPDF2
+PySocks
 python-dateutil
 python-docx
+python-dotenv
 python-multipart
 pytz
 PyYAML
@@ -58,5 +61,8 @@ tqdm
 typing_extensions
 urllib3
 uvicorn
+uvloop
+watchfiles
+websockets
 xxhash
 yarl

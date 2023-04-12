@@ -53,6 +53,16 @@ python3 main.py
 - `console`模式下，输入`/help`查看指令
 - `api`模式下，可对外提供api服务，在`config.json`中可设置`api_port`和`api_host`
 
+## OpenAI代理设置
+
+- 编辑`config.json`, 添加`open_ai_proxy`为你的代理地址，如：
+```
+"open_ai_proxy": {
+  "http": "socks5://127.0.0.1:1081",
+  "https": "socks5://127.0.0.1:1081"
+}
+```
+
 ## 安装postgresql(可选)
 
 - 编辑`config.json`, 设置`use_postgres`为`true`
@@ -112,4 +122,5 @@ CREATE EXTENSION vector;
 - [x] 支持免数据库纯内存(faiss)
 - [x] 支持Stream
 - [x] 支持API
+- [x] 支持代理
 - [ ] 其他还没想到的

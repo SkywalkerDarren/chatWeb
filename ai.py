@@ -14,13 +14,15 @@ class AI:
 
     def __init__(self, cfg: Config):
         openai.api_key = cfg.open_ai_key
+        openai.proxy = cfg.open_ai_proxy
+        self._chat_model = cfg.open_ai_chat_model
         self._use_stream = cfg.use_stream
         self._encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
     def _chat_stream(self, messages: list[dict]) -> Optional[str]:
         response = openai.ChatCompletion.create(
             stream=self._use_stream,
-            model="gpt-3.5-turbo",
+            model=self._chat_model,
             messages=messages,
         )
         if self._use_stream:

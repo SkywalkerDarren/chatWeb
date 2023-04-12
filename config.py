@@ -7,6 +7,8 @@ class Config:
         with open('config.json', 'r') as f:
             self.config = json.load(f)
             self.open_ai_key = self.config.get('open_ai_key')
+            self.open_ai_proxy = self.config.get('open_ai_proxy')
+            self.open_ai_chat_model = self.config.get('open_ai_chat_model', 'gpt-3.5-turbo')
             if not self.open_ai_key:
                 raise ValueError('open_ai_key is not set')
             self.use_stream = self.config.get('use_stream', False)

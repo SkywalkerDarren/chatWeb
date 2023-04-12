@@ -1,5 +1,6 @@
 {
   "open_ai_key": "",
+  "open_ai_chat_model": "gpt-3.5-turbo",
   "use_stream": false,
   "use_postgres": false,
   "index_path": "./temp",
