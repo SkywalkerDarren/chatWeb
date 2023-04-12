@@ -5,6 +5,15 @@ from contents import get_contents
 
 
 def console(cfg: Config):
+    try:
+        while True:
+            if not _console(cfg):
+                return
+    except KeyboardInterrupt:
+        print("退出")
+
+
+def _console(cfg: Config) -> bool:
     """Run the console."""
 
     contents, lang, identify = get_contents()
@@ -33,7 +42,9 @@ def console(cfg: Config):
     while True:
         query = input("请输入查询(/help可查看指令)：")
         if query == "/quit":
-            break
+            return False
+        elif query == "/reset":
+            return True
         elif query == "/summary":
             # 生成embedding式摘要，有基于SIF的加权平均和一般的直接求平均，懒得中文分词了这里使用的是直接求平均，英文可以改成SIF
             ai.generate_summary(storage.get_all_embeddings(identify), num_candidates=100,
@@ -52,6 +63,7 @@ def console(cfg: Config):
         elif query == "/help":
             print("输入/summary生成嵌入式摘要")
             print("输入/reindex重新索引")
+            print("输入/reset重新开始")
             print("输入/quit退出")
             print("输入其他内容进行查询")
             continue
@@ -66,4 +78,3 @@ def console(cfg: Config):
             # 3. 把相关片段推给AI，AI会根据这些片段回答问题
             ai.completion(query, texts)
             print("=====================================")
-
