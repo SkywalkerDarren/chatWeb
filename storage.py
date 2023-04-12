@@ -74,7 +74,7 @@ class _IndexStorage(Storage):
         """Get the text for the provided embedding."""
         texts, index = self._load(name)
         _, indexs = index.search(np.array([embedding]), limit)
-        return texts.iloc[indexs[0]].text.tolist()
+        return [f'paragraph {p}: {t}' for _, p, t in texts.iloc[indexs[0]].values]
 
     def get_all_embeddings(self, name: str):
         texts, index = self._load(name)
@@ -145,7 +145,7 @@ class _PostgresStorage(Storage):
         """Get the text for the provided embedding."""
         result = self._session.query(self.EmbeddingEntity).where(self.EmbeddingEntity.name == name).order_by(
             self.EmbeddingEntity.embedding.cosine_distance(embedding)).limit(limit).all()
-        return [s.text for s in result]
+        return [f'paragraph {s.id}: {s.text}' for s in result]
 
     def get_all_embeddings(self, name: str):
         """Get all embeddings."""

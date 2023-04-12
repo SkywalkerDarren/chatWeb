@@ -110,7 +110,7 @@ class AI:
 
         # 选择具有最高相似度分数的段落作为摘要的候选段落
         candidate_indices = np.argsort(similarity_scores)[::-1][:num_candidates]
-        candidate_paragraphs = [paragraphs[i] for i in candidate_indices]
+        candidate_paragraphs = [f"paragraph {i}: {paragraphs[i]}" for i in candidate_indices]
 
         print("完成计算，开始生成摘要")
 
