@@ -1,8 +1,13 @@
 import os
+import time
 
 from newspaper import fulltext, Article
 import readability
-import requests
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import docx
 import PyPDF2
 from langdetect import detect
@@ -24,7 +29,21 @@ def web_crawler_newspaper(url: str) -> tuple[list[str], str]:
 
 
 def _get_raw_html(url):
-    doc = readability.Document(requests.get(url).text)
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                                'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36')
+
+    with webdriver.Chrome(options=chrome_options) as driver:
+        driver.get(url)
+        print("等10s网页加载完成")
+        time.sleep(10)
+        html = driver.page_source
+
+    doc = readability.Document(html)
     html = doc.summary()
     lang = detect(html)
     return html, lang[0:2]
