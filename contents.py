@@ -81,9 +81,7 @@ def extract_text_from_txt(file_path: str) -> tuple[list[str], str]:
 def extract_text_from_docx(file_path: str) -> tuple[list[str], str]:
     """Extract text content from a DOCX file."""
     document = docx.Document(file_path)
-    contents = []
-    for paragraph in document.paragraphs:
-        contents.append(paragraph.text)
+    contents = [paragraph.text.strip() for paragraph in document.paragraphs if paragraph.text.strip()]
     lang = detect('\n'.join(contents))
     return contents, lang[0:2]
 
@@ -93,7 +91,7 @@ def get_contents() -> tuple[list[str], str, str]:
 
     while True:
         try:
-            url = input("请输入文章链接或pdf/txt/docx文件路径：")
+            url = input("请输入文章链接或pdf/txt/docx文件路径：").strip()
             if os.path.exists(url):
                 if url.endswith('.pdf'):
                     contents, data = extract_text_from_pdf(url)
