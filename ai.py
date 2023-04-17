@@ -48,7 +48,7 @@ class AI:
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(context))
         result = self._chat_stream([
             {'role': 'system',
-             'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序：\n\n{text}'},
+             'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你只能根据以下内容进行回答：\n\n{text}'},
             {'role': 'user', 'content': query},
         ])
         return result
