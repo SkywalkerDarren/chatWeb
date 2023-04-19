@@ -70,7 +70,7 @@ class _IndexStorage(Storage):
         index.add_with_ids(array, ids)
         self._save(texts, index, name)
 
-    def get_texts(self, embedding: list[float], name: str, limit=10) -> list[str]:
+    def get_texts(self, embedding: list[float], name: str, limit=100) -> list[str]:
         """Get the text for the provided embedding."""
         texts, index = self._load(name)
         _, indexs = index.search(np.array([embedding]), limit)
