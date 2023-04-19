@@ -87,7 +87,8 @@ def api(cfg: Config):
         storage = Storage.create_storage(cfg)
         if not storage or not lang:
             return {"code": 1, "msg": "not found", "data": {}}
-        _, embedding = ai.create_embedding(req.query)
+        keywords = ai.get_keywords(req.query)
+        _, embedding = ai.create_embedding(keywords)
         texts = storage.get_texts(embedding, hash_id)
         s = ai.completion(req.query, texts)
         return {"code": 0, "msg": "ok", "data": {"answer": s}}

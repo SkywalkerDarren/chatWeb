@@ -19,21 +19,24 @@ class AI:
         self._use_stream = cfg.use_stream
         self._encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
-    def _chat_stream(self, messages: list[dict]) -> Optional[str]:
+    def _chat_stream(self, messages: list[dict], use_stream: bool = None) -> str:
         response = openai.ChatCompletion.create(
             stream=self._use_stream,
             model=self._chat_model,
             messages=messages,
         )
-        if self._use_stream:
+        if use_stream is not False and self._use_stream:
+            data = ""
             for chunk in response:
                 if chunk.choices[0].delta.get('content', None) is not None:
+                    data += chunk.choices[0].delta.content
                     print(chunk.choices[0].delta.content, end='')
             print()
+            return data.strip()
         else:
+            print(response.choices[0].message.content.strip())
             print("使用的tokens：", response.usage.total_tokens, "，花费：", response.usage.total_tokens / 1000 * 0.002,
                   "美元")
-            print(response.choices[0].message.content.strip())
             return response.choices[0].message.content.strip()
 
     def _num_tokens_from_string(self, string: str) -> int:
@@ -44,6 +47,7 @@ class AI:
     def completion(self, query: str, context: list[str]):
         """Create a completion."""
         context = self._cut_texts(context)
+        print(f"查询片段数：{len(context)}")
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(context))
         result = self._chat_stream([
@@ -62,6 +66,14 @@ class AI:
                 print("超过最大长度，截断到前", index + 1, "个片段")
                 break
         return context
+
+    def get_keywords(self, query: str) -> str:
+        """Get keywords from the query."""
+        result = self._chat_stream([
+            {'role': 'user',
+             'content': f'你需要从语句或问题中提取关键词，最终返回一系列关键词，关键词之间用逗号分隔。\ncontent: {query}\nkeywords: '},
+        ], use_stream=False)
+        return result
 
     @staticmethod
     def create_embedding(text: str) -> (str, list[float]):

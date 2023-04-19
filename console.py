@@ -68,13 +68,16 @@ def _console(cfg: Config) -> bool:
             print("输入其他内容进行查询")
             continue
         else:
-            # 1. 对问题生成embedding
-            _, embedding = ai.create_embedding(query)
-            # 2. 从数据库中找到最相似的片段
+            # 1. 生成关键词
+            print("生成关键词")
+            keywords = ai.get_keywords(query)
+            # 2. 对问题生成embedding
+            _, embedding = ai.create_embedding(keywords)
+            # 3. 从数据库中找到最相似的片段
             texts = storage.get_texts(embedding, identify)
             print("已找到相关片段（前5个）：")
             for text in texts[:5]:
                 print('\t', text)
-            # 3. 把相关片段推给AI，AI会根据这些片段回答问题
+            # 4. 把相关片段推给AI，AI会根据这些片段回答问题
             ai.completion(query, texts)
             print("=====================================")
