@@ -126,4 +126,5 @@ CREATE EXTENSION vector;
 - [x] 支持Stream
 - [x] 支持API
 - [x] 支持代理
+- [x] 添加colab
 - [ ] 其他还没想到的
