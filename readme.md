@@ -1,5 +1,7 @@
 # ChatWeb
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SkywalkerDarren/chatWeb/blob/master/example.ipynb)
+
 ChatWeb可以爬取任意网页并提取正文，生成概要，然后根据正文内容回答你的问题。
 目前是个原理展示的Demo，还没有细分逻辑。
 基于gpt3.5的chatAPI和embeddingAPI，配合向量数据库。
