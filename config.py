@@ -5,9 +5,12 @@ import os
 class Config:
     def __init__(self):
         config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f'config.json not found at {config_path}, '
+                                    f'please copy config.example.json to config.json and modify it.')
         with open(config_path, 'r') as f:
-            self.language = json.load(f).get('language', 'Chinese')
             self.config = json.load(f)
+            self.language = self.config.get('language', 'Chinese')
             self.open_ai_key = self.config.get('open_ai_key')
             self.open_ai_proxy = self.config.get('open_ai_proxy')
             self.open_ai_chat_model = self.config.get('open_ai_chat_model', 'gpt-3.5-turbo')

@@ -52,10 +52,10 @@ class AI:
         result = self._chat_stream([
             {'role': 'system',
              'content': f'You are a helpful AI article assistant. '
-                        f'You must use {self._language} to respond. '
                         f'The following are the relevant article content fragments found from the article. '
                         f'The relevance is sorted from high to low. '
-                        f'You can only answer according to the following content:\n\n{text}'},
+                        f'You can only answer according to the following content:\n\n{text}\n\n'
+                        f'You must use {self._language} to respond.'},
             {'role': 'user', 'content': query},
         ])
         return result

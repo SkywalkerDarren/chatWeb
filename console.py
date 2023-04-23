@@ -42,35 +42,44 @@ def _console(cfg: Config) -> bool:
 
     while True:
         query = input("Please enter your query (/help to view commands):")
-        if query == "/quit":
-            return False
-        elif query == "/reset":
-            return True
-        elif query == "/summary":
-            # 生成embedding式摘要，根据不同的语言使用有基于SIF的加权平均或一般的直接求平均
-            # Generate an embedding-based summary, using weighted average based on SIF or direct average based on the language.
-            ai.generate_summary(storage.get_all_embeddings(identify), num_candidates=100,
-                                use_sif=lang not in ['zh', 'ja', 'ko', 'hi', 'ar', 'fa'])
-            continue
-        elif query == "/reindex":
-            # 重新索引，会清空数据库
-            # Re-index, which will clear the database.
-            storage.clear(identify)
-            embeddings, tokens = ai.create_embeddings(contents)
-            print(f"Embeddings have been created with {len(embeddings)} embeddings, using {tokens} tokens, "
-                  f"costing ${tokens / 1000 * 0.0004}")
+        if query.startswith("/"):
+            if query == "/quit":
+                return False
+            elif query == "/reset":
+                return True
+            elif query == "/summary":
+                # 生成embedding式摘要，根据不同的语言使用有基于SIF的加权平均或一般的直接求平均
+                # Generate an embedding-based summary, using weighted average based on SIF or direct average based on the language.
+                ai.generate_summary(storage.get_all_embeddings(identify), num_candidates=100,
+                                    use_sif=lang not in ['zh', 'ja', 'ko', 'hi', 'ar', 'fa'])
+                continue
+            elif query == "/reindex":
+                # 重新索引，会清空数据库
+                # Re-index, which will clear the database.
+                storage.clear(identify)
+                embeddings, tokens = ai.create_embeddings(contents)
+                print(f"Embeddings have been created with {len(embeddings)} embeddings, using {tokens} tokens, "
+                      f"costing ${tokens / 1000 * 0.0004}")
 
-            storage.add_all(embeddings, identify)
-            print("The embeddings have been saved.")
-            print("=====================================")
-            continue
-        elif query == "/help":
-            print("Enter /summary to generate an embedding-based summary.")
-            print("Enter /reindex to re-index the article.")
-            print("Enter /reset to start over.")
-            print("Enter /quit to exit.")
-            print("Enter any other content for a query.")
-            continue
+                storage.add_all(embeddings, identify)
+                print("The embeddings have been saved.")
+                print("=====================================")
+                continue
+            elif query == "/help":
+                print("Enter /summary to generate an embedding-based summary.")
+                print("Enter /reindex to re-index the article.")
+                print("Enter /reset to start over.")
+                print("Enter /quit to exit.")
+                print("Enter any other content for a query.")
+                continue
+            else:
+                print("Invalid command.")
+                print("Enter /summary to generate an embedding-based summary.")
+                print("Enter /reindex to re-index the article.")
+                print("Enter /reset to start over.")
+                print("Enter /quit to exit.")
+                print("Enter any other content for a query.")
+                continue
         else:
             # 1. 生成关键词
             # 1. Generate keywords.
