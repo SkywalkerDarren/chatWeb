@@ -1,18 +1,20 @@
-from ai import AI
-from config import Config
-from storage import Storage
-import uvicorn
-from fastapi import FastAPI, UploadFile, File
-import shutil
 import os
+import shutil
+
+import uvicorn
 import xxhash
+from fastapi import FastAPI, UploadFile, File
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.exceptions import HTTPException
-from fastapi.exceptions import RequestValidationError
+
+from ai import AI
+from config import Config
 from contents import web_crawler_newspaper, extract_text_from_txt, extract_text_from_docx, \
     extract_text_from_pdf
+from storage import Storage
 
 
 def api(cfg: Config):

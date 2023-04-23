@@ -1,14 +1,12 @@
 import os.path
-from typing import Optional
+from abc import ABC, abstractmethod
 
 import faiss
 import numpy as np
 import pandas as pd
 from pgvector.sqlalchemy import Vector
-
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
-from abc import ABC, abstractmethod
 
 from config import Config
 

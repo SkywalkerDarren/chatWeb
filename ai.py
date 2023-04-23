@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 import openai
 import tiktoken
@@ -18,6 +16,7 @@ class AI:
         self._chat_model = cfg.open_ai_chat_model
         self._use_stream = cfg.use_stream
         self._encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
+        self._language = cfg.language
 
     def _chat_stream(self, messages: list[dict], use_stream: bool = None) -> str:
         response = openai.ChatCompletion.create(
@@ -35,8 +34,8 @@ class AI:
             return data.strip()
         else:
             print(response.choices[0].message.content.strip())
-            print("使用的tokens：", response.usage.total_tokens, "，花费：", response.usage.total_tokens / 1000 * 0.002,
-                  "美元")
+            print(f"Total tokens used: {response.usage.total_tokens}, "
+                  f"cost: ${response.usage.total_tokens / 1000 * 0.002}")
             return response.choices[0].message.content.strip()
 
     def _num_tokens_from_string(self, string: str) -> int:
@@ -47,12 +46,16 @@ class AI:
     def completion(self, query: str, context: list[str]):
         """Create a completion."""
         context = self._cut_texts(context)
-        print(f"查询片段数：{len(context)}")
+        print(f"Number of query fragments:{len(context)}")
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(context))
         result = self._chat_stream([
             {'role': 'system',
-             'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你只能根据以下内容进行回答：\n\n{text}'},
+             'content': f'You are a helpful AI article assistant. '
+                        f'You must use {self._language} to respond. '
+                        f'The following are the relevant article content fragments found from the article. '
+                        f'The relevance is sorted from high to low. '
+                        f'You can only answer according to the following content:\n\n{text}'},
             {'role': 'user', 'content': query},
         ])
         return result
@@ -63,7 +66,7 @@ class AI:
             maximum -= self._num_tokens_from_string(text)
             if maximum < 0:
                 context = context[:index + 1]
-                print("超过最大长度，截断到前", index + 1, "个片段")
+                print(f"Exceeded maximum length, cut the first {index + 1} fragments")
                 break
         return context
 
@@ -71,7 +74,8 @@ class AI:
         """Get keywords from the query."""
         result = self._chat_stream([
             {'role': 'user',
-             'content': f'你需要从语句或问题中提取关键词，最终返回一系列关键词，关键词之间用逗号分隔。\ncontent: {query}\nkeywords: '},
+             'content': f'You need to extract keywords from the statement or question and '
+                        f'return a series of keywords separated by commas.\ncontent: {query}\nkeywords: '},
         ], use_stream=False)
         return result
 
@@ -97,7 +101,7 @@ class AI:
             query_len += self._num_tokens_from_string(text)
             if query_len > 8192 - 1024:
                 ebd, tk = get_embedding(texts[start_index:index + 1])
-                print("查询片段 使用的tokens：", tk, "，花费：", tk / 1000 * 0.0004, "美元")
+                print(f"Query fragments used tokens: {tk}, cost: ${tk / 1000 * 0.0004}")
                 query_len = 0
                 start_index = index + 1
                 tokens += tk
@@ -105,7 +109,7 @@ class AI:
 
         if query_len > 0:
             ebd, tk = get_embedding(texts[start_index:])
-            print("查询片段 使用的tokens：", tk, "，花费：", tk / 1000 * 0.0004, "美元")
+            print(f"Query fragments used tokens: {tk}, cost: ${tk / 1000 * 0.0004}")
             tokens += tk
             result.extend(ebd)
         return result, tokens
@@ -118,26 +122,32 @@ class AI:
         paragraphs = [e[0] for e in embeddings]
         embeddings = np.array([e[1] for e in embeddings])
         # 计算每个段落与整个文本的相似度分数
+        # Calculate the similarity score between each paragraph and the entire text.
         similarity_scores = cosine_similarity(embeddings, avg_embedding.reshape(1, -1)).flatten()
 
         # 选择具有最高相似度分数的段落作为摘要的候选段落
+        # Select the paragraph with the highest similarity score as the candidate paragraph for the summary.
         candidate_indices = np.argsort(similarity_scores)[::-1][:num_candidates]
         candidate_paragraphs = [f"paragraph {i}: {paragraphs[i]}" for i in candidate_indices]
 
-        print("完成计算，开始生成摘要")
+        print("Calculation completed, start generating summary")
 
         candidate_paragraphs = self._cut_texts(candidate_paragraphs)
 
         text = "\n".join(f"{index}. {text}" for index, text in enumerate(candidate_paragraphs))
         result = self._chat_stream([
             {'role': 'system',
-             'content': f'你是一个有帮助的AI文章助手，以下是从文中搜索到具有相关性的文章内容片段，相关性从高到底排序，你需要从这些相关内容中总结全文内容，最后的结果需要用中文展示：\n\n{text}\n\n中文总结：'},
+             'content': f'As a helpful AI article assistant, '
+                        f'I have retrieved the following relevant text fragments from the article, '
+                        f'sorted by relevance from high to low. '
+                        f'You need to summarize the entire article from these fragments, '
+                        f'and present the final result in {self._language}:\n\n{text}\n\n{self._language} summary:'},
         ])
         return result
 
     @staticmethod
     def _calc_avg_embedding(embeddings) -> list[float]:
-        # 没有权重
+        # Calculate the average embedding for the entire text.
         avg_embedding = np.zeros(len(embeddings[0][1]))
         for emb in embeddings:
             avg_embedding += np.array(emb[1])
@@ -146,8 +156,8 @@ class AI:
 
     @staticmethod
     def _calc_paragraph_avg_embedding_with_sif(paragraph_list) -> list[float]:
+        # calculate the SIF embedding for the entire text
         alpha = 0.001
-        # 中文不适用
         # calculate the total number of sentences
         n_sentences = len(paragraph_list)
 

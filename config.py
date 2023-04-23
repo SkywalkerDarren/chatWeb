@@ -6,6 +6,7 @@ class Config:
     def __init__(self):
         config_path = os.path.join(os.path.dirname(__file__), 'config.json')
         with open(config_path, 'r') as f:
+            self.language = json.load(f).get('language', 'Chinese')
             self.config = json.load(f)
             self.open_ai_key = self.config.get('open_ai_key')
             self.open_ai_proxy = self.config.get('open_ai_proxy')
