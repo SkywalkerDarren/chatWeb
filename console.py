@@ -41,18 +41,18 @@ def _console(cfg: Config) -> bool:
         print("=====================================")
 
     while True:
-        query = input("Please enter your query (/help to view commands):")
+        query = input("Please enter your query (/help to view commands):").strip()
         if query.startswith("/"):
             if query == "/quit":
                 return False
             elif query == "/reset":
+                print("=====================================")
                 return True
             elif query == "/summary":
                 # 生成embedding式摘要，根据不同的语言使用有基于SIF的加权平均或一般的直接求平均
                 # Generate an embedding-based summary, using weighted average based on SIF or direct average based on the language.
                 ai.generate_summary(storage.get_all_embeddings(identify), num_candidates=100,
                                     use_sif=lang not in ['zh', 'ja', 'ko', 'hi', 'ar', 'fa'])
-                continue
             elif query == "/reindex":
                 # 重新索引，会清空数据库
                 # Re-index, which will clear the database.
@@ -63,15 +63,12 @@ def _console(cfg: Config) -> bool:
 
                 storage.add_all(embeddings, identify)
                 print("The embeddings have been saved.")
-                print("=====================================")
-                continue
             elif query == "/help":
                 print("Enter /summary to generate an embedding-based summary.")
                 print("Enter /reindex to re-index the article.")
                 print("Enter /reset to start over.")
                 print("Enter /quit to exit.")
                 print("Enter any other content for a query.")
-                continue
             else:
                 print("Invalid command.")
                 print("Enter /summary to generate an embedding-based summary.")
@@ -79,7 +76,8 @@ def _console(cfg: Config) -> bool:
                 print("Enter /reset to start over.")
                 print("Enter /quit to exit.")
                 print("Enter any other content for a query.")
-                continue
+            print("=====================================")
+            continue
         else:
             # 1. 生成关键词
             # 1. Generate keywords.
