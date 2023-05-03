@@ -109,3 +109,7 @@ Please enter your query (/help to view commands):
 - [x] Add Colab support
 - [x] Add language support
 - [ ] Other features that have not been thought of yet
+
+# Star History
+
+![](https://api.star-history.com/svg?repos=SkywalkerDarren/chatWeb)
