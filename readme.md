@@ -108,6 +108,7 @@ Please enter your query (/help to view commands):
 - [x] Support for proxies
 - [x] Add Colab support
 - [x] Add language support
+- [ ] Support for gradio
 - [ ] Other features that have not been thought of yet
 
 # Star History
