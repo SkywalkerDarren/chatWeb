@@ -72,7 +72,8 @@ class _IndexStorage(Storage):
         """Get the text for the provided embedding."""
         texts, index = self._load(name)
         _, indexs = index.search(np.array([embedding]), limit)
-        return [f'paragraph {p}: {t}' for _, p, t in texts.iloc[indexs[0]].values]
+        indexs = [i for i in indexs[0] if i >= 0]
+        return [f'paragraph {p}: {t}' for _, p, t in texts.iloc[indexs].values]
 
     def get_all_embeddings(self, name: str):
         texts, index = self._load(name)
