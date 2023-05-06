@@ -20,6 +20,8 @@ class Webui:
         self.hash_id = None
 
     def _save_to_storage(self, contents, hash_id):
+        print(f"Saving to storage {hash_id}")
+        print(f"Contents: \n{contents}")
         self.storage = Storage.create_storage(self.cfg)
         if self.storage.been_indexed(hash_id):
             return 0
@@ -41,9 +43,10 @@ class Webui:
                 with gr.Tab("url"):
                     url_error_box = gr.Textbox(label="Input Error", visible=False)
                     url_box = gr.Textbox(label="URL")
-                    url_submit_btn = gr.Button("Submit url")
+                    url_submit_btn = gr.Button("Submit url", variant="primary")
 
                     def submit(url):
+                        url = url.strip()
                         if len(url) == 0:
                             return {url_error_box: gr.update(value="Enter URL", visible=True)}
                         try:
@@ -71,7 +74,7 @@ class Webui:
                 with gr.Tab("file"):
                     file_error_box = gr.Textbox(label="Input Error", visible=False)
                     file_box = gr.File(label="File", file_types=["pdf", "txt", "docx"])
-                    file_submit_btn = gr.Button("Submit file")
+                    file_submit_btn = gr.Button("Submit file", variant="primary")
 
                     def submit(file):
                         url = file.name
@@ -103,9 +106,17 @@ class Webui:
                     )
 
             with chat_page:
-                chatbot = gr.Chatbot()
-                msg = gr.Textbox(label="Query")
-                reset_box = gr.Button("Reset")
+                with gr.Row():
+                    with gr.Column():
+                        chatbot = gr.Chatbot()
+                        msg = gr.Textbox(label="Query")
+                        submit_box = gr.Button("Submit", variant="primary")
+                        reset_box = gr.Button("Reset")
+                    with gr.Column():
+                        dataset_box = gr.Dataset(components=[gr.Textbox(visible=False)],
+                                                 label="Context",
+                                                 samples=[],
+                                                 )
 
                 def respond(message, chat_history):
                     kw = self.ai.get_keywords(message)
@@ -113,9 +124,10 @@ class Webui:
                         return "", chat_history
                     _, kw_ebd = self.ai.create_embedding(kw)
                     ctx = self.storage.get_texts(kw_ebd, self.hash_id)
+                    print(f"Context: \n{ctx}")
                     bot_message = self.ai.completion(message, ctx)
                     chat_history.append((message, bot_message))
-                    return "", chat_history
+                    return "", chat_history, dataset_box.update(samples=[[item] for item in ctx][:20])
 
                 def reset():
                     self.hash_id = None
@@ -126,6 +138,8 @@ class Webui:
                         msg: gr.update(value=""),
                     }
 
-                msg.submit(respond, [msg, chatbot], [msg, chatbot])
-                reset_box.click(reset, None, [init_page, chat_page, chatbot, msg], queue=False)
-        demo.launch(server_port=self.cfg.webui_port)
+                msg.submit(respond, [msg, chatbot], [msg, chatbot, dataset_box])
+                submit_box.click(respond, [msg, chatbot], [msg, chatbot, dataset_box])
+                reset_box.click(reset, None, [init_page, chat_page, chatbot, msg, dataset_box], queue=False)
+        demo.title = "Chat Web"
+        demo.launch(server_port=self.cfg.webui_port, show_api=False)
