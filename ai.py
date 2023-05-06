@@ -17,9 +17,11 @@ class AI:
         self._use_stream = cfg.use_stream
         self._encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
         self._language = cfg.language
+        self._temperature = cfg.temperature
 
     def _chat_stream(self, messages: list[dict], use_stream: bool = None) -> str:
         response = openai.ChatCompletion.create(
+            temperature=self._temperature,
             stream=self._use_stream,
             model=self._chat_model,
             messages=messages,

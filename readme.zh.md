@@ -47,15 +47,21 @@ pip3 install -r requirements.txt
 python3 main.py
 ```
 
+## 模式选择
+
+- 编辑`config.json`, 设置`mode`为`console`, `api`或`webui`作为选择启动模式。
+- `console`模式下，输入`/help`查看指令
+- `api`模式下，可对外提供api服务，在`config.json`中可设置`api_port`和`api_host`
+- `webui`模式下，可提供webui服务，在`config.json`中可设置`webui_port`，默认为`http://127.0.0.1:7860`
+
 ## Stream模式
 
 - 编辑`config.json`, 设置`use_stream`为`true`
 
-## 模式选择
+## temperature设置
 
-- 编辑`config.json`, 设置`mode`为`console`或`api`可选择启动模式。
-- `console`模式下，输入`/help`查看指令
-- `api`模式下，可对外提供api服务，在`config.json`中可设置`api_port`和`api_host`
+- 编辑`config.json`, 设置`temperature`为0-1之间的数值
+- 数值越小，回答越保守稳定，数值越大，回答越大胆，可能导致出现“幻觉”
 
 ## OpenAI代理设置
 
@@ -119,4 +125,6 @@ Please enter your query (/help to view commands):
 - [x] 支持代理
 - [x] 添加colab
 - [x] 添加语言支持
+- [x] 支持temperature
+- [x] 支持webui
 - [ ] 其他还没想到的

@@ -1,6 +1,7 @@
 {
   "open_ai_key": "",
-  "language": "Chinese",
+  "temperature": 0.1,
+  "language": "English",
   "open_ai_chat_model": "gpt-3.5-turbo",
   "use_stream": false,
   "use_postgres": false,
@@ -8,5 +9,6 @@
   "postgres_url": "postgresql://localhost:5432/mydb",
   "mode": "console",
   "api_port": 9531,
-  "api_host": "localhost"
+  "api_host": "localhost",
+  "webui_port": 7860
 }

@@ -39,15 +39,21 @@ An improvement was made to generate vectors based on keywords rather than the us
 
 - Edit `config.json`, set `language` to `English` or other language
 
+## Mode Selection
+
+- Edit `config.json` and set `mode` to `console`, `api`, or `webui` to choose the startup mode.
+- In `console` mode, type `/help` to view commands.
+- In `api` mode, an API service can be provided to the outside world. `api_port` and `api_host` can be set in `config.json`.
+- In `webui` mode, a web user interface service can be provided. `webui_port` can be set in `config.json`, defaulting to `http://127.0.0.1:7860`.
+
 ## Stream Mode
 
 - Edit `config.json` and set `use_stream` to `true`.
 
-## Mode Selection
+## Setting the Temperature
 
-- Edit `config.json` and set `mode` to `console` or `api` to choose the startup mode.
-- In `console` mode, enter `/help` to view the command list.
-- In `api` mode, you can provide API services to the outside world, and set `api_port` and `api_host` in `config.json`.
+- Edit `config.json` and set `temperature` to a value between 0 and 1.
+- The smaller the value, the more conservative and stable the response will be. The larger the value, the more daring the response may be, possibly resulting in "hallucinations."
 
 ## OpenAI Proxy Settings
 
@@ -108,7 +114,8 @@ Please enter your query (/help to view commands):
 - [x] Support for proxies
 - [x] Add Colab support
 - [x] Add language support
-- [ ] Support for gradio
+- [x] Support for temperature
+- [x] Support for webui
 - [ ] Other features that have not been thought of yet
 
 # Star History

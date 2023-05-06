@@ -16,6 +16,9 @@ class Config:
             self.open_ai_chat_model = self.config.get('open_ai_chat_model', 'gpt-3.5-turbo')
             if not self.open_ai_key:
                 raise ValueError('open_ai_key is not set')
+            self.temperature = self.config.get('temperature', 0.1)
+            if self.temperature < 0 or self.temperature > 1:
+                raise ValueError('temperature must be between 0 and 1, less is more conservative, more is more creative')
             self.use_stream = self.config.get('use_stream', False)
             self.use_postgres = self.config.get('use_postgres', False)
             if not self.use_postgres:
@@ -25,7 +28,8 @@ class Config:
             if self.use_postgres and self.postgres_url is None:
                 raise ValueError('postgres_url is not set')
             self.mode = self.config.get('mode', 'console')
-            if self.mode not in ['console', 'api']:
-                raise ValueError('mode must be console or api')
+            if self.mode not in ['console', 'api', 'webui']:
+                raise ValueError('mode must be console or api or webui')
             self.api_port = self.config.get('api_port', 9531)
             self.api_host = self.config.get('api_host', 'localhost')
+            self.webui_port = self.config.get('webui_port', 7860)
