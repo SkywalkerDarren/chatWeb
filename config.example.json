@@ -7,7 +7,7 @@
   "use_postgres": false,
   "index_path": "./temp",
   "postgres_url": "postgresql://localhost:5432/mydb",
-  "mode": "console",
+  "mode": "webui",
   "api_port": 9531,
   "api_host": "localhost",
   "webui_port": 7860

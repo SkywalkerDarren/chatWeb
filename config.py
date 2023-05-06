@@ -27,7 +27,7 @@ class Config:
             self.postgres_url = self.config.get('postgres_url')
             if self.use_postgres and self.postgres_url is None:
                 raise ValueError('postgres_url is not set')
-            self.mode = self.config.get('mode', 'console')
+            self.mode = self.config.get('mode', 'webui')
             if self.mode not in ['console', 'api', 'webui']:
                 raise ValueError('mode must be console or api or webui')
             self.api_port = self.config.get('api_port', 9531)
