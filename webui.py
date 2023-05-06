@@ -109,6 +109,11 @@ class Webui:
                 with gr.Row():
                     with gr.Column():
                         chatbot = gr.Chatbot()
+                        kw_box = gr.Dataset(components=[gr.Textbox(visible=False)],
+                                            label="Query keywords",
+                                            samples=[],
+                                            visible=False,
+                                            )
                         msg = gr.Textbox(label="Query")
                         submit_box = gr.Button("Submit", variant="primary")
                         reset_box = gr.Button("Reset")
@@ -116,6 +121,7 @@ class Webui:
                         dataset_box = gr.Dataset(components=[gr.Textbox(visible=False)],
                                                  label="Context",
                                                  samples=[],
+                                                 visible=False,
                                                  )
 
                 def respond(message, chat_history):
@@ -127,7 +133,8 @@ class Webui:
                     print(f"Context: \n{ctx}")
                     bot_message = self.ai.completion(message, ctx)
                     chat_history.append((message, bot_message))
-                    return "", chat_history, dataset_box.update(samples=[[item] for item in ctx][:20])
+                    return "", chat_history, dataset_box.update(samples=[[item] for item in ctx][:20], visible=True), \
+                        kw_box.update(samples=[[item.strip()] for item in kw.split(',')], visible=True)
 
                 def reset():
                     self.hash_id = None
@@ -138,8 +145,8 @@ class Webui:
                         msg: gr.update(value=""),
                     }
 
-                msg.submit(respond, [msg, chatbot], [msg, chatbot, dataset_box])
-                submit_box.click(respond, [msg, chatbot], [msg, chatbot, dataset_box])
+                msg.submit(respond, [msg, chatbot], [msg, chatbot, dataset_box, kw_box])
+                submit_box.click(respond, [msg, chatbot], [msg, chatbot, dataset_box, kw_box])
                 reset_box.click(reset, None, [init_page, chat_page, chatbot, msg, dataset_box], queue=False)
         demo.title = "Chat Web"
         demo.launch(server_port=self.cfg.webui_port, show_api=False)
