@@ -1,7 +1,9 @@
+import xxhash
+
 from ai import AI
 from config import Config
 from storage import Storage
-from contents import get_contents
+from contents import *
 
 
 def console(cfg: Config):
@@ -16,7 +18,7 @@ def console(cfg: Config):
 def _console(cfg: Config) -> bool:
     """Run the console."""
 
-    contents, lang, identify = get_contents()
+    contents, lang, identify = _get_contents()
 
     print("The article has been retrieved, and the number of text fragments is:", len(contents))
     for content in contents:
@@ -96,3 +98,30 @@ def _console(cfg: Config) -> bool:
             # 4. Push the relevant fragments to the AI, which will answer the question based on these fragments.
             ai.completion(query, texts)
             print("=====================================")
+
+
+def _get_contents() -> tuple[list[str], str, str]:
+    """Get the contents."""
+
+    while True:
+        try:
+            url = input("Please enter the link to the article or the file path of the PDF/TXT/DOCX document: ").strip()
+            if os.path.exists(url):
+                if url.endswith('.pdf'):
+                    contents, data = extract_text_from_pdf(url)
+                elif url.endswith('.txt'):
+                    contents, data = extract_text_from_txt(url)
+                elif url.endswith('.docx'):
+                    contents, data = extract_text_from_docx(url)
+                else:
+                    print("Unsupported file format.")
+                    continue
+            else:
+                contents, data = web_crawler_newspaper(url)
+            if not contents:
+                print("Unable to retrieve the content of the article. Please enter the link to the article or "
+                      "the file path of the PDF/TXT/DOCX document again.")
+                continue
+            return contents, data, xxhash.xxh3_128_hexdigest('\n'.join(contents))
+        except Exception as e:
+            print("Error:", e)

@@ -4,7 +4,6 @@ import time
 import PyPDF2
 import docx
 import readability
-import xxhash
 from langdetect import detect
 from newspaper import fulltext, Article
 from selenium import webdriver
@@ -35,8 +34,8 @@ def _get_raw_html(url):
 
     with webdriver.Chrome(options=chrome_options) as driver:
         driver.get(url)
-        print("Please wait for 10 seconds until the webpage finishes loading.")
-        time.sleep(10)
+        print("Please wait for 5 seconds until the webpage finishes loading.")
+        time.sleep(5)
         html = driver.page_source
 
     doc = readability.Document(html)
@@ -80,30 +79,3 @@ def extract_text_from_docx(file_path: str) -> tuple[list[str], str]:
     contents = [paragraph.text.strip() for paragraph in document.paragraphs if paragraph.text.strip()]
     lang = detect('\n'.join(contents))
     return contents, lang[0:2]
-
-
-def get_contents() -> tuple[list[str], str, str]:
-    """Get the contents."""
-
-    while True:
-        try:
-            url = input("Please enter the link to the article or the file path of the PDF/TXT/DOCX document: ").strip()
-            if os.path.exists(url):
-                if url.endswith('.pdf'):
-                    contents, data = extract_text_from_pdf(url)
-                elif url.endswith('.txt'):
-                    contents, data = extract_text_from_txt(url)
-                elif url.endswith('.docx'):
-                    contents, data = extract_text_from_docx(url)
-                else:
-                    print("Unsupported file format.")
-                    continue
-            else:
-                contents, data = web_crawler_newspaper(url)
-            if not contents:
-                print("Unable to retrieve the content of the article. Please enter the link to the article or "
-                      "the file path of the PDF/TXT/DOCX document again.")
-                continue
-            return contents, data, xxhash.xxh3_128_hexdigest('\n'.join(contents))
-        except Exception as e:
-            print("Error:", e)
