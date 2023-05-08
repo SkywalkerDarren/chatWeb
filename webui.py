@@ -17,7 +17,6 @@ class Webui:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self.ai = AI(cfg)
-        self.hash_id = None
 
     def _save_to_storage(self, contents, hash_id):
         print(f"Saving to storage {hash_id}")
@@ -36,6 +35,7 @@ class Webui:
     def run(self):
         with gr.Blocks() as demo:
 
+            hash_id_state = gr.State()
             init_page = gr.Column()
             chat_page = gr.Column(visible=False)
 
@@ -54,8 +54,8 @@ class Webui:
                             content, lang = web_crawler_newspaper(url)
                             if len(content) == 0:
                                 return {url_error_box: gr.update(value="Can not crawl this url", visible=True)}
-                            self.hash_id = self._get_hash_id(content)
-                            self._save_to_storage(content, self.hash_id)
+                            hash_id = self._get_hash_id(content)
+                            self._save_to_storage(content, hash_id)
                         except Exception as e:
                             return {url_error_box: gr.update(value=str(e), visible=True)}
                         return {
@@ -63,12 +63,13 @@ class Webui:
                             url_box: gr.update(value=""),
                             init_page: gr.update(visible=False),
                             chat_page: gr.update(visible=True),
+                            hash_id_state: hash_id
                         }
 
                     url_submit_btn.click(
                         submit,
                         [url_box],
-                        [init_page, url_error_box, chat_page, url_box],
+                        [init_page, url_error_box, chat_page, url_box, hash_id_state],
                     )
 
                 with gr.Tab("file"):
@@ -89,20 +90,21 @@ class Webui:
 
                         if len(contents) == 0:
                             return {file_error_box: gr.update(value="Empty file", visible=True)}
-                        self.hash_id = self._get_hash_id(contents)
-                        self._save_to_storage(contents, self.hash_id)
+                        hash_id = self._get_hash_id(contents)
+                        self._save_to_storage(contents, hash_id)
 
                         return {
                             init_page: gr.update(visible=False),
                             chat_page: gr.update(visible=True),
                             file_box: gr.update(value=_Keywords.NO_VALUE),
                             file_error_box: gr.update(visible=False),
+                            hash_id_state: hash_id
                         }
 
                     file_submit_btn.click(
                         submit,
                         [file_box],
-                        [init_page, chat_page, file_box, file_error_box],
+                        [init_page, chat_page, file_box, file_error_box, hash_id_state],
                     )
 
             with chat_page:
@@ -124,12 +126,12 @@ class Webui:
                                                  visible=False,
                                                  )
 
-                def respond(message, chat_history):
+                def respond(message, chat_history, hash_id):
                     kw = self.ai.get_keywords(message)
-                    if len(kw) == 0 or self.hash_id is None:
+                    if len(kw) == 0 or hash_id is None:
                         return "", chat_history
                     _, kw_ebd = self.ai.create_embedding(kw)
-                    ctx = self.storage.get_texts(kw_ebd, self.hash_id)
+                    ctx = self.storage.get_texts(kw_ebd, hash_id)
                     print(f"Context: \n{ctx}")
                     bot_message = self.ai.completion(message, ctx)
                     chat_history.append((message, bot_message))
@@ -137,16 +139,16 @@ class Webui:
                         kw_box.update(samples=[[item.strip()] for item in kw.split(',')], visible=True)
 
                 def reset():
-                    self.hash_id = None
                     return {
                         init_page: gr.update(visible=True),
                         chat_page: gr.update(visible=False),
                         chatbot: gr.update(value=[]),
                         msg: gr.update(value=""),
+                        hash_id_state: None,
                     }
 
-                msg.submit(respond, [msg, chatbot], [msg, chatbot, dataset_box, kw_box])
-                submit_box.click(respond, [msg, chatbot], [msg, chatbot, dataset_box, kw_box])
-                reset_box.click(reset, None, [init_page, chat_page, chatbot, msg, dataset_box], queue=False)
+                msg.submit(respond, [msg, chatbot, hash_id_state], [msg, chatbot, dataset_box, kw_box])
+                submit_box.click(respond, [msg, chatbot, hash_id_state], [msg, chatbot, dataset_box, kw_box])
+                reset_box.click(reset, None, [init_page, chat_page, chatbot, msg, dataset_box, hash_id_state])
         demo.title = "Chat Web"
         demo.launch(server_port=self.cfg.webui_port, show_api=False)
