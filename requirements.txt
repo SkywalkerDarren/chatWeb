@@ -76,3 +76,4 @@ wsproto
 xxhash
 yarl
 gradio
+psycopg2

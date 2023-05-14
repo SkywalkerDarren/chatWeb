@@ -10,5 +10,6 @@
   "mode": "webui",
   "api_port": 9531,
   "api_host": "localhost",
-  "webui_port": 7860
+  "webui_port": 7860,
+  "webui_host": "0.0.0.0"
 }

@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  chatweb:
+    build: .
+    ports:
+      - "9531:9531"
+      - "7860:7860"
+    volumes:
+      - ./config.json:/app/config.json
+      # - ./:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
