@@ -33,3 +33,4 @@ class Config:
             self.api_port = self.config.get('api_port', 9531)
             self.api_host = self.config.get('api_host', 'localhost')
             self.webui_port = self.config.get('webui_port', 7860)
+            self.webui_host = self.config.get('webui_host', '0.0.0.0')

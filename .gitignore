@@ -6,3 +6,5 @@
 /config.json
 /temp
 /upload
+__pycache__
+config.json
