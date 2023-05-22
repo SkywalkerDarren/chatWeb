@@ -20,13 +20,14 @@ class AI:
         self._temperature = cfg.temperature
 
     def _chat_stream(self, messages: list[dict], use_stream: bool = None) -> str:
+        use_stream = use_stream if use_stream is not None else self._use_stream
         response = openai.ChatCompletion.create(
             temperature=self._temperature,
-            stream=self._use_stream,
+            stream=use_stream,
             model=self._chat_model,
             messages=messages,
         )
-        if use_stream is not False and self._use_stream:
+        if use_stream:
             data = ""
             for chunk in response:
                 if chunk.choices[0].delta.get('content', None) is not None:
@@ -56,7 +57,10 @@ class AI:
              'content': f'You are a helpful AI article assistant. '
                         f'The following are the relevant article content fragments found from the article. '
                         f'The relevance is sorted from high to low. '
-                        f'You can only answer according to the following content:\n\n{text}\n\n'
+                        f'You can only answer according to the following content:\n```\n{text}\n```\n'
+                        f'You need to carefully consider your answer to ensure that it is based on the context. '
+                        f'If the context does not mention the content or it is uncertain whether it is correct, '
+                        f'please answer "Current context cannot provide effective information."'
                         f'You must use {self._language} to respond.'},
             {'role': 'user', 'content': query},
         ])
