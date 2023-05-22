@@ -27,6 +27,8 @@ An improvement was made to generate vectors based on keywords rather than the us
 
 # Getting Started
 
+## Manual installation:
+
 - Install Python3
 - Download this repository by running `git clone https://github.com/SkywalkerDarren/chatWeb.git`
 - Navigate to the directory by running `cd chatWeb`
@@ -34,6 +36,14 @@ An improvement was made to generate vectors based on keywords rather than the us
 - Edit `config.json` and set `open_ai_key` to your OpenAI API key
 - Install dependencies by running `pip3 install -r requirements.txt`
 - Start the application by running `python3 main.py`
+
+## Docker:
+if you prefer, you can also run this project using docker:
+
+- build the container using `docker-compose build` (only needed once when you are not planning to contibute to this repo)
+- copy `config.example.json` to `config.json` and set all the needed stuff. The example config is already fine for running with docker, no need to change anything there, if you don't have the OPEN_AI_KEY in your env variables you can set it here too, or later if you run this app.
+- run the container: `docker-compose up"
+- open the application in browser: `http://localhost:7860`
 
 ## Set language
 

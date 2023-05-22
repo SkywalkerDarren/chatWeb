@@ -151,4 +151,4 @@ class Webui:
                 submit_box.click(respond, [msg, chatbot, hash_id_state], [msg, chatbot, dataset_box, kw_box])
                 reset_box.click(reset, None, [init_page, chat_page, chatbot, msg, dataset_box, hash_id_state])
         demo.title = "Chat Web"
-        demo.launch(server_port=self.cfg.webui_port, show_api=False)
+        demo.launch(server_port=self.cfg.webui_port, server_name=self.cfg.webui_host, show_api=False)
