@@ -14,6 +14,7 @@ class Config:
             self.open_ai_key = self.config.get('open_ai_key')
             self.open_ai_proxy = self.config.get('open_ai_proxy')
             self.open_ai_chat_model = self.config.get('open_ai_chat_model', 'gpt-3.5-turbo')
+            self.open_ai_embedding_model = self.config.get('open_ai_embedding_model', 'text-embedding-ada-002')
             if not self.open_ai_key:
                 raise ValueError('open_ai_key is not set')
             self.temperature = self.config.get('temperature', 0.1)

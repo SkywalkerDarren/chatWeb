@@ -3,6 +3,7 @@
   "temperature": 0.1,
   "language": "English",
   "open_ai_chat_model": "gpt-3.5-turbo",
+  "open_ai_embedding_model": "text-embedding-ada-002",
   "use_stream": false,
   "use_postgres": false,
   "index_path": "./temp",

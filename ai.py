@@ -1,6 +1,7 @@
 import numpy as np
 import openai
 import tiktoken
+from openai import OpenAI
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -11,17 +12,18 @@ class AI:
     """The AI class."""
 
     def __init__(self, cfg: Config):
-        openai.api_key = cfg.open_ai_key
         openai.proxy = cfg.open_ai_proxy
         self._chat_model = cfg.open_ai_chat_model
+        self._embedding_model = cfg.open_ai_embedding_model
         self._use_stream = cfg.use_stream
         self._encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
         self._language = cfg.language
         self._temperature = cfg.temperature
+        self.client = OpenAI(api_key=cfg.open_ai_key)
 
     def _chat_stream(self, messages: list[dict], use_stream: bool = None) -> str:
         use_stream = use_stream if use_stream is not None else self._use_stream
-        response = openai.ChatCompletion.create(
+        response = self.client.chat.completions.create(
             temperature=self._temperature,
             stream=use_stream,
             model=self._chat_model,
@@ -85,10 +87,9 @@ class AI:
         ], use_stream=False)
         return result
 
-    @staticmethod
-    def create_embedding(text: str) -> (str, list[float]):
+    def create_embedding(self, text: str) -> (str, list[float]):
         """Create an embedding for the provided text."""
-        embedding = openai.Embedding.create(model="text-embedding-ada-002", input=text)
+        embedding = self.client.embeddings.create(model=self._embedding_model, input=text)
         return text, embedding.data[0].embedding
 
     def create_embeddings(self, texts: list[str]) -> (list[tuple[str, list[float]]], int):
@@ -99,7 +100,7 @@ class AI:
         tokens = 0
 
         def get_embedding(input_slice: list[str]):
-            embedding = openai.Embedding.create(model="text-embedding-ada-002", input=input_slice)
+            embedding = self.client.embeddings.create(model=self._embedding_model, input=input_slice)
             return [(txt, data.embedding) for txt, data in
                     zip(input_slice, embedding.data)], embedding.usage.total_tokens
 
