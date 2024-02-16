@@ -111,20 +111,22 @@ class Webui:
                 with gr.Row():
                     with gr.Column():
                         chatbot = gr.Chatbot()
-                        kw_box = gr.Dataset(components=[gr.Textbox(visible=False)],
-                                            label="Query keywords",
-                                            samples=[],
-                                            visible=False,
-                                            )
+                        kw_box = gr.Dataset(
+                            components=[gr.Textbox(visible=False)],
+                            label="Query keywords",
+                            samples=[],
+                            visible=False,
+                        )
                         msg = gr.Textbox(label="Query")
                         submit_box = gr.Button("Submit", variant="primary")
                         reset_box = gr.Button("Reset")
                     with gr.Column():
-                        dataset_box = gr.Dataset(components=[gr.Textbox(visible=False)],
-                                                 label="Context",
-                                                 samples=[],
-                                                 visible=False,
-                                                 )
+                        dataset_box = gr.Dataset(
+                            components=[gr.Textbox(visible=False)],
+                            label="Context",
+                            samples=[],
+                            visible=False,
+                        )
 
                 def respond(message, chat_history, hash_id):
                     kw = self.ai.get_keywords(message)
@@ -135,8 +137,10 @@ class Webui:
                     print(f"Context: \n{ctx}")
                     bot_message = self.ai.completion(message, ctx)
                     chat_history.append((message, bot_message))
-                    return "", chat_history, dataset_box.update(samples=[[item] for item in ctx][:20], visible=True), \
-                        kw_box.update(samples=[[item.strip()] for item in kw.split(',')], visible=True)
+                    contexts = [[item] for item in ctx][:20]
+                    keywords = [[item.strip()] for item in kw.split(',')]
+                    visible = gr.update(visible=True)
+                    return "", chat_history, contexts, keywords, visible, visible
 
                 def reset():
                     return {
@@ -144,11 +148,25 @@ class Webui:
                         chat_page: gr.update(visible=False),
                         chatbot: gr.update(value=[]),
                         msg: gr.update(value=""),
+                        kw_box: gr.update(value=[], visible=False),
+                        dataset_box: gr.update(value=[], visible=False),
                         hash_id_state: None,
                     }
 
-                msg.submit(respond, [msg, chatbot, hash_id_state], [msg, chatbot, dataset_box, kw_box])
-                submit_box.click(respond, [msg, chatbot, hash_id_state], [msg, chatbot, dataset_box, kw_box])
-                reset_box.click(reset, None, [init_page, chat_page, chatbot, msg, dataset_box, hash_id_state])
+                msg.submit(
+                    respond,
+                    [msg, chatbot, hash_id_state],
+                    [msg, chatbot, dataset_box, kw_box, dataset_box, kw_box]
+                )
+                submit_box.click(
+                    respond,
+                    [msg, chatbot, hash_id_state],
+                    [msg, chatbot, dataset_box, kw_box, dataset_box, kw_box]
+                )
+                reset_box.click(
+                    reset,
+                    None,
+                    [init_page, chat_page, chatbot, msg, kw_box, dataset_box, hash_id_state]
+                )
         demo.title = "Chat Web"
         demo.launch(server_port=self.cfg.webui_port, server_name=self.cfg.webui_host, show_api=False)

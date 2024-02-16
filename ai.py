@@ -5,7 +5,7 @@ from openai import OpenAI
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from config import Config
+from config import Config, GPTModel, EmbeddingModel
 
 
 class AI:
@@ -13,10 +13,10 @@ class AI:
 
     def __init__(self, cfg: Config):
         openai.proxy = cfg.open_ai_proxy
-        self._chat_model = cfg.open_ai_chat_model
-        self._embedding_model = cfg.open_ai_embedding_model
+        self._chat_model: GPTModel = cfg.open_ai_chat_model
+        self._embedding_model: EmbeddingModel = cfg.open_ai_embedding_model
         self._use_stream = cfg.use_stream
-        self._encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
+        self._encoding = tiktoken.encoding_for_model(self._chat_model.name)
         self._language = cfg.language
         self._temperature = cfg.temperature
         self.client = OpenAI(api_key=cfg.open_ai_key)
@@ -24,9 +24,10 @@ class AI:
     def _chat_stream(self, messages: list[dict], use_stream: bool = None) -> str:
         use_stream = use_stream if use_stream is not None else self._use_stream
         response = self.client.chat.completions.create(
+            n=1,
             temperature=self._temperature,
             stream=use_stream,
-            model=self._chat_model,
+            model=self._chat_model.name,
             messages=messages,
         )
         if use_stream:
@@ -39,8 +40,11 @@ class AI:
             return data.strip()
         else:
             print(response.choices[0].message.content.strip())
-            print(f"Total tokens used: {response.usage.total_tokens}, "
-                  f"cost: ${response.usage.total_tokens / 1000 * 0.002}")
+            input_cost = response.usage.prompt_tokens / 1000 * self._chat_model.input_price_per_k
+            output_cost = response.usage.completion_tokens / 1000 * self._chat_model.output_price_per_k
+            print(f"Total tokens: {response.usage.total_tokens}, cost: ${input_cost + output_cost}")
+            print(f"Input tokens: {response.usage.prompt_tokens}, cost: ${input_cost}")
+            print(f"Output tokens: {response.usage.completion_tokens}, cost: ${output_cost}")
             return response.choices[0].message.content.strip()
 
     def _num_tokens_from_string(self, string: str) -> int:
@@ -69,7 +73,7 @@ class AI:
         return result
 
     def _cut_texts(self, context):
-        maximum = 4096 - 1024
+        maximum = self._chat_model.context_window - 1024
         for index, text in enumerate(context):
             maximum -= self._num_tokens_from_string(text)
             if maximum < 0:
@@ -87,9 +91,24 @@ class AI:
         ], use_stream=False)
         return result
 
+    def _wrap_create_embedding(self, data):
+        if self._embedding_model.name != 'text-embedding-ada-002':
+            embedding = self.client.embeddings.create(
+                model=self._embedding_model.name,
+                input=data,
+                dimensions=1536,
+            )
+        else:
+            # text-embedding-ada-002 does not support the dimensions parameter
+            embedding = self.client.embeddings.create(
+                model=self._embedding_model.name,
+                input=data,
+            )
+        return embedding
+
     def create_embedding(self, text: str) -> (str, list[float]):
         """Create an embedding for the provided text."""
-        embedding = self.client.embeddings.create(model=self._embedding_model, input=text)
+        embedding = self._wrap_create_embedding(text)
         return text, embedding.data[0].embedding
 
     def create_embeddings(self, texts: list[str]) -> (list[tuple[str, list[float]]], int):
@@ -100,15 +119,15 @@ class AI:
         tokens = 0
 
         def get_embedding(input_slice: list[str]):
-            embedding = self.client.embeddings.create(model=self._embedding_model, input=input_slice)
+            embedding = self._wrap_create_embedding(input_slice)
             return [(txt, data.embedding) for txt, data in
                     zip(input_slice, embedding.data)], embedding.usage.total_tokens
 
         for index, text in enumerate(texts):
             query_len += self._num_tokens_from_string(text)
-            if query_len > 8192 - 1024:
+            if query_len > self._embedding_model.max_tokens - 1024:
                 ebd, tk = get_embedding(texts[start_index:index + 1])
-                print(f"Query fragments used tokens: {tk}, cost: ${tk / 1000 * 0.0004}")
+                print(f"Query fragments used tokens: {tk}, cost: ${tk / 1000 * self._embedding_model.price_per_k}")
                 query_len = 0
                 start_index = index + 1
                 tokens += tk
@@ -116,7 +135,7 @@ class AI:
 
         if query_len > 0:
             ebd, tk = get_embedding(texts[start_index:])
-            print(f"Query fragments used tokens: {tk}, cost: ${tk / 1000 * 0.0004}")
+            print(f"Query fragments used tokens: {tk}, cost: ${tk / 1000 * self._embedding_model.price_per_k}")
             tokens += tk
             result.extend(ebd)
         return result, tokens
