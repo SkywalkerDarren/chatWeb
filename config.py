@@ -32,6 +32,10 @@ SUPPORTED_GPT_MODELS = [
 
     GPTModel('gpt-3.5-turbo-16k', 16385, 0.0005, 0.0015),  # gpt-3.5-turbo-16k-0613
     GPTModel('gpt-3.5-turbo-16k-0613', 16385, 0.0005, 0.0015),
+
+    # MiniMax models (OpenAI-compatible API at https://api.minimax.io/v1)
+    GPTModel('MiniMax-M2.7', 1_000_000, 0.004, 0.016),
+    GPTModel('MiniMax-M2.7-highspeed', 1_000_000, 0.001, 0.004),
 ]
 
 
@@ -61,6 +65,7 @@ class Config:
             self.language = self.config.get('language', 'Chinese')
             self.open_ai_key = self.config.get('open_ai_key')
             self.open_ai_proxy = self.config.get('open_ai_proxy')
+            self.open_ai_base_url = self.config.get('open_ai_base_url')
             gpt_model = self.config.get('open_ai_chat_model', 'gpt-3.5-turbo')
             self.open_ai_chat_model = self.get_gpt_model(gpt_model)
             embedding_model = self.config.get('open_ai_embedding_model', 'text-embedding-ada-002')
@@ -71,6 +76,9 @@ class Config:
             if self.temperature < 0 or self.temperature > 1:
                 raise ValueError(
                     'temperature must be between 0 and 1, less is more conservative, more is more creative')
+            # MiniMax requires temperature > 0
+            if self.is_minimax_model() and self.temperature == 0:
+                self.temperature = 0.01
             self.use_stream = self.config.get('use_stream', False)
             self.use_postgres = self.config.get('use_postgres', False)
             if not self.use_postgres:
@@ -98,3 +106,6 @@ class Config:
         if model not in name_list:
             raise ValueError('open_ai_embedding_model must be one of ' + ', '.join(name_list))
         return next(m for m in SUPPORTED_EMBEDDING_MODELS if m.name == model)
+
+    def is_minimax_model(self):
+        return self.open_ai_chat_model.name.startswith('MiniMax-')

@@ -73,6 +73,25 @@ python3 main.py
 }
 ```
 
+## 使用MiniMax作为Chat模型
+
+ChatWeb支持通过OpenAI兼容API使用[MiniMax](https://www.minimaxi.com/)模型。MiniMax M2.7拥有100万token上下文窗口。
+
+- 编辑`config.json`，设置：
+```json
+{
+  "open_ai_key": "你的MiniMax API密钥",
+  "open_ai_base_url": "https://api.minimax.io/v1",
+  "open_ai_chat_model": "MiniMax-M2.7"
+}
+```
+
+可用的MiniMax模型：
+- `MiniMax-M2.7` — 旗舰模型，100万token上下文窗口
+- `MiniMax-M2.7-highspeed` — 高速版本，100万token上下文窗口
+
+> **注意：** MiniMax模型仅用于聊天功能。Embedding仍使用OpenAI的Embedding API，如果您使用MiniMax进行聊天，可能需要单独的OpenAI API密钥用于Embedding。
+
 ## 安装postgresql(可选)
 
 - 编辑`config.json`, 设置`use_postgres`为`true`

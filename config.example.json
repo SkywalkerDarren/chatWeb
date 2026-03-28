@@ -1,5 +1,6 @@
 {
   "open_ai_key": "",
+  "open_ai_base_url": "",
   "temperature": 0.1,
   "language": "English",
   "open_ai_chat_model": "gpt-3.5-turbo",
