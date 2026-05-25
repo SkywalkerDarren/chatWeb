@@ -39,6 +39,8 @@ class AI:
             print()
             return data.strip()
         else:
+            if not response.choices or response.choices[0].message is None:
+                raise ValueError("LLM returned empty or filtered response")
             print(response.choices[0].message.content.strip())
             input_cost = response.usage.prompt_tokens / 1000 * self._chat_model.input_price_per_k
             output_cost = response.usage.completion_tokens / 1000 * self._chat_model.output_price_per_k
