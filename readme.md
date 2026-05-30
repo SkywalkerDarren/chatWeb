@@ -75,6 +75,25 @@ if you prefer, you can also run this project using docker:
 }
 ```
 
+## Using MiniMax as Chat Model
+
+ChatWeb supports [MiniMax](https://www.minimaxi.com/) models via their OpenAI-compatible API. MiniMax M2.7 offers a 1M token context window.
+
+- Edit `config.json` and set:
+```json
+{
+  "open_ai_key": "your-minimax-api-key",
+  "open_ai_base_url": "https://api.minimax.io/v1",
+  "open_ai_chat_model": "MiniMax-M2.7"
+}
+```
+
+Available MiniMax models:
+- `MiniMax-M2.7` — flagship model with 1M context window
+- `MiniMax-M2.7-highspeed` — faster variant with 1M context window
+
+> **Note:** MiniMax models are used for chat only. Embeddings still use OpenAI's embedding API, so a separate OpenAI API key may be needed for embedding if you want to use MiniMax for chat.
+
 ## Install PostgreSQL (Optional)
 
 - Edit `config.json` and set `use_postgres` to `true`.

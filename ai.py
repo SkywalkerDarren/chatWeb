@@ -16,10 +16,17 @@ class AI:
         self._chat_model: GPTModel = cfg.open_ai_chat_model
         self._embedding_model: EmbeddingModel = cfg.open_ai_embedding_model
         self._use_stream = cfg.use_stream
-        self._encoding = tiktoken.encoding_for_model(self._chat_model.name)
+        try:
+            self._encoding = tiktoken.encoding_for_model(self._chat_model.name)
+        except KeyError:
+            # Fallback for non-OpenAI models (e.g. MiniMax)
+            self._encoding = tiktoken.get_encoding('cl100k_base')
         self._language = cfg.language
         self._temperature = cfg.temperature
-        self.client = OpenAI(api_key=cfg.open_ai_key)
+        client_kwargs = dict(api_key=cfg.open_ai_key)
+        if cfg.open_ai_base_url:
+            client_kwargs['base_url'] = cfg.open_ai_base_url
+        self.client = OpenAI(**client_kwargs)
 
     def _chat_stream(self, messages: list[dict], use_stream: bool = None) -> str:
         use_stream = use_stream if use_stream is not None else self._use_stream
@@ -33,9 +40,10 @@ class AI:
         if use_stream:
             data = ""
             for chunk in response:
-                if chunk.choices[0].delta.get('content', None) is not None:
-                    data += chunk.choices[0].delta.content
-                    print(chunk.choices[0].delta.content, end='')
+                content = getattr(chunk.choices[0].delta, 'content', None)
+                if content is not None:
+                    data += content
+                    print(content, end='')
             print()
             return data.strip()
         else:
